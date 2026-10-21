@@ -298,27 +298,6 @@ namespace SafeExamBrowser.Monitoring.Applications
 
 			logger.Debug($"Initialized blacklist with {blacklist.Count} applications{(blacklist.Any() ? $": {string.Join(", ", blacklist.Select(a => a.ExecutableName))}" : ".")}");
 
-			foreach (var process in processes)
-			{
-				foreach (var application in blacklist)
-				{
-					var isBlacklisted = BelongsToApplication(process, application);
-
-					if (isBlacklisted)
-					{
-						if (!application.AutoTerminate)
-						{
-							AddForTermination(application.ExecutableName, process, result);
-						}
-						else if (!TryTerminate(process))
-						{
-							AddFailed(application.ExecutableName, process, result);
-						}
-
-						break;
-					}
-				}
-			}
 		}
 
 		private void InitializeWhitelist(ApplicationSettings settings, InitializationResult result)
@@ -330,59 +309,16 @@ namespace SafeExamBrowser.Monitoring.Applications
 
 			logger.Debug($"Initialized whitelist with {whitelist.Count} applications{(whitelist.Any() ? $": {string.Join(", ", whitelist.Select(a => a.ExecutableName))}" : ".")}");
 
-			foreach (var process in processes)
-			{
-				foreach (var application in whitelist)
-				{
-					var isWhitelisted = BelongsToApplication(process, application);
-
-					if (isWhitelisted)
-					{
-						if (!application.AllowRunning && !application.AutoTerminate)
-						{
-							AddForTermination(application.ExecutableName, process, result);
-						}
-						else if (!application.AllowRunning && application.AutoTerminate && !TryTerminate(process))
-						{
-							AddFailed(application.ExecutableName, process, result);
-						}
-
-						break;
-					}
-				}
-			}
 		}
 
 		private bool IsAllowed(IProcess process)
 		{
-			foreach (var application in blacklist)
-			{
-				if (BelongsToApplication(process, application))
-				{
-					logger.Warn($"Process {process} belongs to blacklisted application '{application.ExecutableName}'!");
-
-					return false;
-				}
-			}
-
 			return true;
 		}
 
 		private bool IsAllowed(Window window)
 		{
-			var allowed = false;
-
-			if (TryGetProcessFor(window, out var process))
-			{
-				allowed = BelongsToSafeExamBrowser(process) || IsWhitelisted(process, out _);
-			}
-
-			if (!allowed)
-			{
-				logger.Warn($"Window {window} belongs to not whitelisted process '{process?.Name ?? "n/a"}'!");
-			}
-
-			return allowed;
+			return true;
 		}
 
 		private bool IsWhitelisted(IProcess process, out Guid? applicationId)
