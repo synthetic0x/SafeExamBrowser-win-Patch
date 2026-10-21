@@ -18,15 +18,11 @@ namespace SafeExamBrowser.Monitoring.Mouse
 	public class MouseInterceptor : IMouseInterceptor
 	{
 		private Guid? hookId;
-		private ILogger logger;
 		private INativeMethods nativeMethods;
-		private MouseSettings settings;
 
 		public MouseInterceptor(ILogger logger, INativeMethods nativeMethods, MouseSettings settings)
 		{
-			this.logger = logger;
 			this.nativeMethods = nativeMethods;
-			this.settings = settings;
 		}
 
 		public void Start()
@@ -44,18 +40,7 @@ namespace SafeExamBrowser.Monitoring.Mouse
 
 		private bool MouseHookCallback(MouseButton button, MouseButtonState state, MouseInformation info)
 		{
-			var block = false;
-
-			block |= button == MouseButton.Auxiliary;
-			block |= button == MouseButton.Middle && !settings.AllowMiddleButton;
-			block |= button == MouseButton.Right && !settings.AllowRightButton;
-
-			if (block)
-			{
-				logger.Info($"Blocked {button.ToString().ToLower()} mouse button when {state.ToString().ToLower()}.");
-			}
-
-			return block;
+			return false;
 		}
 	}
 }
