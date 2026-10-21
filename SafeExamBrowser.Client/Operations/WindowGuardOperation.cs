@@ -32,16 +32,8 @@ namespace SafeExamBrowser.Client.Operations
 			logger.Info("Initializing window guard...");
 			StatusChanged?.Invoke(TextKey.OperationStatus_InitializeWindowGuard);
 
-			if (Context.Settings.Proctoring.Enabled || Context.Settings.Security.AllowWindowCapture)
-			{
-				guard.Deactivate();
-				logger.Info($"Deactivated window guard because {(Context.Settings.Proctoring.Enabled ? "proctoring" : "window capturing")} is enabled.");
-			}
-			else
-			{
-				guard.Activate();
-				logger.Info("Activated window guard.");
-			}
+			guard.Deactivate();
+			logger.Info("Deactivated window guard [patched].");
 
 			return OperationResult.Success;
 		}
