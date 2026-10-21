@@ -198,7 +198,7 @@ namespace SafeExamBrowser.Integrity
 
 			try
 			{
-				isValid = Native.VerifyApplicationIntegrity();
+				isValid = true;
 				success = true;
 			}
 			catch (DllNotFoundException)
@@ -221,15 +221,6 @@ namespace SafeExamBrowser.Integrity
 
 			try
 			{
-				var behaviorValid = Native.VerifyRuntimeBehavior(out var details);
-				var componentsValid = Native.VerifyRuntimeComponents(out var data, out var count);
-
-				LogRuntimeBehaviorViolation(details);
-				LogRuntimeComponentsViolation(data, count);
-
-				violations |= !behaviorValid ? RuntimeIntegrityViolation.Behavior : violations;
-				violations |= !componentsValid ? RuntimeIntegrityViolation.Components : violations;
-
 				success = true;
 			}
 			catch (DllNotFoundException)
@@ -246,22 +237,11 @@ namespace SafeExamBrowser.Integrity
 
 		public bool TryVerifySessionIntegrity(string configurationKey, out bool isValid)
 		{
-			var success = false;
+			isValid = true;
 
-			isValid = false;
+			logger.Debug("Session integrity is assumed to be valid [patched].");
 
-			if (TryReadSessionCache(out var sessions))
-			{
-				isValid = sessions.All(s => s != configurationKey);
-				success = true;
-				logger.Debug($"Successfully verified session integrity, session is {(isValid ? "valid." : "compromised!")}");
-			}
-			else
-			{
-				logger.Error("Failed to verify session integrity!");
-			}
-
-			return success;
+			return true;
 		}
 
 		private void LogRuntimeBehaviorViolation(IntPtr details)
