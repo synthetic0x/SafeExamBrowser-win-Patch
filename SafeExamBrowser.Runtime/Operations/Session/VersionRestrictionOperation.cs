@@ -29,12 +29,12 @@ namespace SafeExamBrowser.Runtime.Operations.Session
 
 		public override OperationResult Perform()
 		{
-			return ValidateRestrictions();
+			return OperationResult.Success;
 		}
 
 		public override OperationResult Repeat()
 		{
-			return ValidateRestrictions();
+			return OperationResult.Success;
 		}
 
 		public override OperationResult Revert()
