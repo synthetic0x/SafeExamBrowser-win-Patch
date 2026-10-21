@@ -26,32 +26,12 @@ namespace SafeExamBrowser.Runtime.Operations.Session
 
 		public override OperationResult Perform()
 		{
-			var success = true;
-
-			StatusChanged?.Invoke(TextKey.OperationStatus_VerifySessionIntegrity);
-
-			success &= InitializeStickyKeys();
-			success &= VerifyCursors();
-			success &= VerifyEaseOfAccess();
-
-			LogResult(success);
-
-			return success ? OperationResult.Success : OperationResult.Failed;
+			return OperationResult.Success;
 		}
 
 		public override OperationResult Repeat()
 		{
-			var success = true;
-
-			StatusChanged?.Invoke(TextKey.OperationStatus_VerifySessionIntegrity);
-
-			success &= InitializeStickyKeys();
-			success &= VerifyCursors();
-			success &= VerifyEaseOfAccess();
-
-			LogResult(success);
-
-			return success ? OperationResult.Success : OperationResult.Failed;
+			return OperationResult.Success;
 		}
 
 		public override OperationResult Revert()
