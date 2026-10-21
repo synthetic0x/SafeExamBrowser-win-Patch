@@ -176,6 +176,11 @@ namespace SafeExamBrowser.Logging
 
 		private void Add(ILogContent content)
 		{
+			if (content is ILogMessage message && message.Severity == LogLevel.Warning)
+			{
+				return;
+			}
+
 			lock (@lock)
 			{
 				log.Add(content);

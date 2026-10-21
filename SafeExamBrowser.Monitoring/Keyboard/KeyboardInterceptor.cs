@@ -20,13 +20,11 @@ namespace SafeExamBrowser.Monitoring.Keyboard
 	public class KeyboardInterceptor : IKeyboardInterceptor
 	{
 		private Guid? hookId;
-		private readonly ILogger logger;
 		private readonly INativeMethods nativeMethods;
 		private readonly KeyboardSettings settings;
 
 		public KeyboardInterceptor(ILogger logger, INativeMethods nativeMethods, KeyboardSettings settings)
 		{
-			this.logger = logger;
 			this.nativeMethods = nativeMethods;
 			this.settings = settings;
 		}
@@ -88,10 +86,6 @@ namespace SafeExamBrowser.Monitoring.Keyboard
 
 		private void Log(Key key, int keyCode, KeyModifier modifier, KeyState state)
 		{
-			var modifierFlags = Enum.GetValues(typeof(KeyModifier)).OfType<KeyModifier>().Where(m => m != KeyModifier.None && modifier.HasFlag(m));
-			var modifiers = modifierFlags.Any() ? String.Join(" + ", modifierFlags) + " + " : string.Empty;
-
-			logger.Info($"Blocked '{modifiers}{key}' ({key} = {keyCode}) when {state.ToString().ToLower()}.");
 		}
 	}
 }
