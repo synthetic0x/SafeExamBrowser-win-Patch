@@ -127,7 +127,7 @@ namespace SafeExamBrowser.Runtime.Operations.Session
 
 		private bool TryInitializeConnection()
 		{
-			var mandatory = Context.Next.Settings.Service.Policy == ServicePolicy.Mandatory;
+			var mandatory = false;
 			var warn = Context.Next.Settings.Service.Policy == ServicePolicy.Warn;
 			var connected = serviceProxy.Connect();
 			var success = connected || !mandatory;
