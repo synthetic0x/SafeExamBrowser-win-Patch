@@ -55,6 +55,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
 		public IntPtr Handle { get; private set; }
+		internal bool IsMainWindow => isMainWindow;
 
 		public event AddressChangedEventHandler AddressChanged;
 		public event ActionRequestedEventHandler BackwardNavigationRequested;
@@ -90,6 +91,33 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 			InitializeComponent();
 			InitializeBrowserWindow(browserControl);
+		}
+
+		public void ToggleFullScreen()
+		{
+			Dispatcher.Invoke(() =>
+			{
+				var fullScreen = WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
+
+				if (fullScreen)
+				{
+					WindowStyle = WindowStyle.SingleBorderWindow;
+					ResizeMode = ResizeMode.CanResize;
+					WindowState = WindowState.Maximized;
+				}
+				else
+				{
+					WindowState = WindowState.Normal;
+					WindowStyle = WindowStyle.None;
+					ResizeMode = ResizeMode.NoResize;
+					Left = 0;
+					Top = 0;
+					Width = SystemParameters.PrimaryScreenWidth;
+					Height = SystemParameters.PrimaryScreenHeight;
+				}
+
+				Activate();
+			});
 		}
 
 		public void BringToForeground()

@@ -8,6 +8,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using SafeExamBrowser.Browser.Contracts.Events;
 using SafeExamBrowser.I18n.Contracts;
@@ -143,6 +144,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			Closing += Taskbar_Closing;
 			Loaded += (o, args) => InitializeBounds();
+			FullScreenButton.Click += FullScreenButton_Click;
 			QuitButton.Clicked += QuitButton_Clicked;
 		}
 
@@ -169,6 +171,14 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		private void Activator_Activated()
 		{
 			(this as ITaskbar).Focus(true);
+		}
+
+		private void FullScreenButton_Click(object sender, RoutedEventArgs e)
+		{
+			var windows = Application.Current.Windows.OfType<BrowserWindow>().ToList();
+			var window = windows.FirstOrDefault(w => w.IsMainWindow) ?? windows.FirstOrDefault();
+
+			window?.ToggleFullScreen();
 		}
 
 		private void QuitButton_Clicked(CancelEventArgs args)
