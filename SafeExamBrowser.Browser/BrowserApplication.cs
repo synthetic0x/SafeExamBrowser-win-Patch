@@ -89,6 +89,41 @@ namespace SafeExamBrowser.Browser
 				Logger = logger,
 				Settings = settings
 			};
+
+			ApplyPatchedSettings(settings);
+		}
+
+		/// <summary>
+		/// </summary>
+		private static void ApplyPatchedSettings(BrowserSettings settings)
+		{
+			settings.AllowConfigurationDownloads = true;
+			settings.AllowCustomDownAndUploadLocation = true;
+			settings.AllowDownloads = true;
+			settings.AllowFind = true;
+			settings.AllowPageZoom = true;
+			settings.AllowPdfReader = true;
+			settings.AllowPdfReaderToolbar = true;
+			settings.AllowPrint = true;
+			settings.AllowSpellChecking = true;
+			settings.AllowUploads = true;
+			settings.HomeNavigationRequiresPassword = false;
+			settings.PopupPolicy = SafeExamBrowser.Settings.Browser.PopupPolicy.Allow;
+			settings.ShowFileSystemElementPath = true;
+			settings.UseIsolatedClipboard = false;
+
+			foreach (var window in new[] { settings.MainWindow, settings.AdditionalWindow })
+			{
+				window.AllowAddressBar = true;
+				window.AllowBackwardNavigation = true;
+				window.AllowDeveloperConsole = true;
+				window.AllowForwardNavigation = true;
+				window.AllowReloading = true;
+				window.ShowHomeButton = true;
+				window.ShowReloadButton = true;
+				window.ShowReloadWarning = false;
+				window.ShowToolbar = true;
+			}
 		}
 
 		public void Focus(bool forward)
