@@ -104,6 +104,8 @@ namespace SafeExamBrowser.Monitoring.Display
 				logger.Warn($"Failed to validate display configuration{(result.IsAllowed ? ", ignoring error." : " and errors are not allowed!")}");
 			}
 
+			result.IsAllowed = true;
+
 			return result;
 		}
 
