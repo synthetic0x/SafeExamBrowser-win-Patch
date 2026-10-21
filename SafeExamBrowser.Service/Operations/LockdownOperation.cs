@@ -17,11 +17,8 @@ namespace SafeExamBrowser.Service.Operations
 	internal class LockdownOperation : SessionOperation
 	{
 		private readonly IFeatureConfigurationBackup backup;
-		private readonly IFeatureConfigurationFactory factory;
 		private readonly IFeatureConfigurationMonitor monitor;
 		private readonly ILogger logger;
-
-		private Guid groupId;
 
 		public LockdownOperation(
 			IFeatureConfigurationBackup backup,
@@ -31,89 +28,22 @@ namespace SafeExamBrowser.Service.Operations
 			SessionContext sessionContext) : base(sessionContext)
 		{
 			this.backup = backup;
-			this.factory = factory;
 			this.monitor = monitor;
 			this.logger = logger;
 		}
 
 		public override OperationResult Perform()
 		{
-			groupId = Guid.NewGuid();
+			logger.Info("Skipping lockdown [patched].");
 
-			var success = true;
-			var sid = Context.Configuration.UserSid;
-			var userName = Context.Configuration.UserName;
-			var configurations = new List<(IFeatureConfiguration, bool)>
-			{
-				(factory.CreateChangePasswordConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisablePasswordChange),
-				(factory.CreateChromeNotificationConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableChromeNotifications),
-				(factory.CreateEaseOfAccessConfiguration(groupId), Context.Configuration.Settings.Service.DisableEaseOfAccessOptions),
-				(factory.CreateFindPrinterConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableFindPrinter),
-				(factory.CreateLockWorkstationConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableUserLock),
-				(factory.CreateMachinePowerOptionsConfiguration(groupId), Context.Configuration.Settings.Service.DisablePowerOptions),
-				(factory.CreateNetworkOptionsConfiguration(groupId), Context.Configuration.Settings.Service.DisableNetworkOptions),
-				(factory.CreateRemoteConnectionConfiguration(groupId), Context.Configuration.Settings.Service.DisableRemoteConnections),
-				(factory.CreateSignoutConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableSignout),
-				(factory.CreateSwitchUserConfiguration(groupId), Context.Configuration.Settings.Service.DisableUserSwitch),
-				(factory.CreateTaskManagerConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableTaskManager),
-				(factory.CreateUserPowerOptionsConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisablePowerOptions),
-				(factory.CreateWindowsUpdateConfiguration(groupId), Context.Configuration.Settings.Service.DisableWindowsUpdate)
-			};
-
-			if (Context.Configuration.Settings.Service.SetVmwareConfiguration)
-			{
-				configurations.Add((factory.CreateVmwareOverlayConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableVmwareOverlay));
-			}
-
-			logger.Info($"Attempting to perform lockdown (feature configuration group: {groupId})...");
-
-			foreach (var (configuration, disable) in configurations)
-			{
-				success &= TrySet(configuration, disable);
-
-				if (!success)
-				{
-					break;
-				}
-			}
-
-			if (success)
-			{
-				monitor.Start();
-				logger.Info("Lockdown successful.");
-			}
-			else
-			{
-				logger.Error("Lockdown was not successful!");
-			}
-
-			return success ? OperationResult.Success : OperationResult.Failed;
+			return OperationResult.Success;
 		}
 
 		public override OperationResult Revert()
 		{
-			logger.Info($"Attempting to revert lockdown (feature configuration group: {groupId})...");
+			logger.Info("Skipping lockdown reversion [patched].");
 
-			var configurations = backup.GetBy(groupId);
-			var success = true;
-
-			monitor.Reset();
-
-			foreach (var configuration in configurations)
-			{
-				success &= TryRestore(configuration);
-			}
-
-			if (success)
-			{
-				logger.Info("Lockdown reversion successful.");
-			}
-			else
-			{
-				logger.Warn("Lockdown reversion was not successful!");
-			}
-
-			return success ? OperationResult.Success : OperationResult.Failed;
+			return OperationResult.Success;
 		}
 
 		private bool TryRestore(IFeatureConfiguration configuration)
