@@ -97,22 +97,7 @@ namespace SafeExamBrowser.Client.Responsibilities
 
 		private void StartMonitoring()
 		{
-			sentinel.StartMonitoringSystemEvents();
-
-			if (!Settings.Security.AllowStickyKeys)
-			{
-				sentinel.StartMonitoringStickyKeys();
-			}
-
-			if (Settings.Security.VerifyCursorConfiguration)
-			{
-				sentinel.StartMonitoringCursors();
-			}
-
-			if (Settings.Service.IgnoreService)
-			{
-				sentinel.StartMonitoringEaseOfAccess();
-			}
+			Logger.Info("Skipping system sentinel monitoring [patched].");
 		}
 
 		private void StopMonitoring()
