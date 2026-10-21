@@ -335,12 +335,12 @@ namespace SafeExamBrowser.Client.Operations
 
 		private void InitializeQuitButtonForActionCenter()
 		{
-			actionCenter.ShowQuitButton = Context.Settings.Security.AllowTermination;
+			actionCenter.ShowQuitButton = true;
 		}
 
 		private void InitializeQuitButtonForTaskbar()
 		{
-			taskbar.ShowQuitButton = Context.Settings.Security.AllowTermination;
+			taskbar.ShowQuitButton = true;
 		}
 
 		private void InitializeNetworkForActionCenter()
