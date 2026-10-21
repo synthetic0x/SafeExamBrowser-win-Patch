@@ -29,7 +29,6 @@ namespace SafeExamBrowser.Client.Responsibilities
 		private readonly IApplicationMonitor applicationMonitor;
 		private readonly ICoordinator coordinator;
 		private readonly IDisplayMonitor displayMonitor;
-		private readonly IExplorerShell explorerShell;
 		private readonly ISystemSentinel sentinel;
 		private readonly ITaskbar taskbar;
 		private readonly IText text;
@@ -50,7 +49,6 @@ namespace SafeExamBrowser.Client.Responsibilities
 			this.applicationMonitor = applicationMonitor;
 			this.coordinator = coordinator;
 			this.displayMonitor = displayMonitor;
-			this.explorerShell = explorerShell;
 			this.sentinel = sentinel;
 			this.taskbar = taskbar;
 			this.text = text;
@@ -124,8 +122,7 @@ namespace SafeExamBrowser.Client.Responsibilities
 
 		private void ApplicationMonitor_ExplorerStarted()
 		{
-			Logger.Info("Trying to terminate Windows explorer...");
-			explorerShell.Terminate();
+			Logger.Info("Explorer started, skipping termination [patched].");
 
 			Logger.Info("Re-initializing working area...");
 			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
