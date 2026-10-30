@@ -1,0 +1,58 @@
+From 43600c29f27e32e5c838c04a4dd0eddbe01649d6 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:02:08 -0400
+Subject: [PATCH] варнинг логи идут в пизду
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Logging/Logger.cs                          | 5 +++++
+ SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs | 6 ------
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/SafeExamBrowser.Logging/Logger.cs b/SafeExamBrowser.Logging/Logger.cs
+index 10e2fd5f..7c735570 100644
+--- a/SafeExamBrowser.Logging/Logger.cs
++++ b/SafeExamBrowser.Logging/Logger.cs
+@@ -176,6 +176,11 @@ namespace SafeExamBrowser.Logging
+ 
+ 		private void Add(ILogContent content)
+ 		{
++			if (content is ILogMessage message && message.Severity == LogLevel.Warning)
++			{
++				return;
++			}
++
+ 			lock (@lock)
+ 			{
+ 				log.Add(content);
+diff --git a/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs b/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
+index d10217a0..e5fbfcaa 100644
+--- a/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
++++ b/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
+@@ -20,13 +20,11 @@ namespace SafeExamBrowser.Monitoring.Keyboard
+ 	public class KeyboardInterceptor : IKeyboardInterceptor
+ 	{
+ 		private Guid? hookId;
+-		private readonly ILogger logger;
+ 		private readonly INativeMethods nativeMethods;
+ 		private readonly KeyboardSettings settings;
+ 
+ 		public KeyboardInterceptor(ILogger logger, INativeMethods nativeMethods, KeyboardSettings settings)
+ 		{
+-			this.logger = logger;
+ 			this.nativeMethods = nativeMethods;
+ 			this.settings = settings;
+ 		}
+@@ -88,10 +86,6 @@ namespace SafeExamBrowser.Monitoring.Keyboard
+ 
+ 		private void Log(Key key, int keyCode, KeyModifier modifier, KeyState state)
+ 		{
+-			var modifierFlags = Enum.GetValues(typeof(KeyModifier)).OfType<KeyModifier>().Where(m => m != KeyModifier.None && modifier.HasFlag(m));
+-			var modifiers = modifierFlags.Any() ? String.Join(" + ", modifierFlags) + " + " : string.Empty;
+-
+-			logger.Info($"Blocked '{modifiers}{key}' ({key} = {keyCode}) when {state.ToString().ToLower()}.");
+ 		}
+ 	}
+ }

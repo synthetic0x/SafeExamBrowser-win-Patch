@@ -1,0 +1,44 @@
+From 785bafbf238a1b3b57462462d3e220871e07f3d7 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:32 -0400
+Subject: [PATCH] версия похуй любой конфиг хавает патч
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .github/workflows/issues.yml                                  | 1 -
+ .../Operations/Session/VersionRestrictionOperation.cs         | 4 ++--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/.github/workflows/issues.yml b/.github/workflows/issues.yml
+index 02438a12..728adaf8 100644
+--- a/.github/workflows/issues.yml
++++ b/.github/workflows/issues.yml
+@@ -13,7 +13,6 @@ jobs:
+     steps:
+       - uses: actions/stale@v8
+         with:
+-          # https://github.com/marketplace/actions/close-stale-issues
+           days-before-issue-stale: 28
+           days-before-issue-close: 14
+           stale-issue-label: "stale"
+diff --git a/SafeExamBrowser.Runtime/Operations/Session/VersionRestrictionOperation.cs b/SafeExamBrowser.Runtime/Operations/Session/VersionRestrictionOperation.cs
+index cb92a3d8..bbf08fd3 100644
+--- a/SafeExamBrowser.Runtime/Operations/Session/VersionRestrictionOperation.cs
++++ b/SafeExamBrowser.Runtime/Operations/Session/VersionRestrictionOperation.cs
+@@ -29,12 +29,12 @@ namespace SafeExamBrowser.Runtime.Operations.Session
+ 
+ 		public override OperationResult Perform()
+ 		{
+-			return ValidateRestrictions();
++			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Repeat()
+ 		{
+-			return ValidateRestrictions();
++			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Revert()

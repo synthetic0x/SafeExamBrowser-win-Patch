@@ -1,0 +1,24 @@
+From 99db574f09f987cd56a6aac65cb88e01a07380f6 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:50 -0400
+Subject: [PATCH] альт+таб включен патч
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs b/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
+index 6db214af..d10217a0 100644
+--- a/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
++++ b/SafeExamBrowser.Monitoring/Keyboard/KeyboardInterceptor.cs
+@@ -70,7 +70,6 @@ namespace SafeExamBrowser.Monitoring.Keyboard
+ 			block |= modifier.HasFlag(KeyModifier.Alt) && key == Key.Escape && !settings.AllowAltEsc;
+ 			block |= modifier.HasFlag(KeyModifier.Alt) && key == Key.F4 && !settings.AllowAltF4;
+ 			block |= modifier.HasFlag(KeyModifier.Alt) && key == Key.Space;
+-			block |= modifier.HasFlag(KeyModifier.Alt) && key == Key.Tab;
+ 
+ 			block |= modifier.HasFlag(KeyModifier.Ctrl) && key == Key.C && !settings.AllowCtrlC;
+ 			block |= modifier.HasFlag(KeyModifier.Ctrl) && key == Key.Escape && !settings.AllowCtrlEsc;

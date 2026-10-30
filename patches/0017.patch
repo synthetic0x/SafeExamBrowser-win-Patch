@@ -1,0 +1,123 @@
+From 13d2183913e9a44db6d1cdf1826c195b33516d88 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:08:25 -0400
+Subject: [PATCH] локдаун системы отключен
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Operations/LockdownOperation.cs           | 78 +------------------
+ 1 file changed, 4 insertions(+), 74 deletions(-)
+
+diff --git a/SafeExamBrowser.Service/Operations/LockdownOperation.cs b/SafeExamBrowser.Service/Operations/LockdownOperation.cs
+index 26350039..7739140b 100644
+--- a/SafeExamBrowser.Service/Operations/LockdownOperation.cs
++++ b/SafeExamBrowser.Service/Operations/LockdownOperation.cs
+@@ -17,12 +17,9 @@ namespace SafeExamBrowser.Service.Operations
+ 	internal class LockdownOperation : SessionOperation
+ 	{
+ 		private readonly IFeatureConfigurationBackup backup;
+-		private readonly IFeatureConfigurationFactory factory;
+ 		private readonly IFeatureConfigurationMonitor monitor;
+ 		private readonly ILogger logger;
+ 
+-		private Guid groupId;
+-
+ 		public LockdownOperation(
+ 			IFeatureConfigurationBackup backup,
+ 			IFeatureConfigurationFactory factory,
+@@ -31,89 +28,22 @@ namespace SafeExamBrowser.Service.Operations
+ 			SessionContext sessionContext) : base(sessionContext)
+ 		{
+ 			this.backup = backup;
+-			this.factory = factory;
+ 			this.monitor = monitor;
+ 			this.logger = logger;
+ 		}
+ 
+ 		public override OperationResult Perform()
+ 		{
+-			groupId = Guid.NewGuid();
+-
+-			var success = true;
+-			var sid = Context.Configuration.UserSid;
+-			var userName = Context.Configuration.UserName;
+-			var configurations = new List<(IFeatureConfiguration, bool)>
+-			{
+-				(factory.CreateChangePasswordConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisablePasswordChange),
+-				(factory.CreateChromeNotificationConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableChromeNotifications),
+-				(factory.CreateEaseOfAccessConfiguration(groupId), Context.Configuration.Settings.Service.DisableEaseOfAccessOptions),
+-				(factory.CreateFindPrinterConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableFindPrinter),
+-				(factory.CreateLockWorkstationConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableUserLock),
+-				(factory.CreateMachinePowerOptionsConfiguration(groupId), Context.Configuration.Settings.Service.DisablePowerOptions),
+-				(factory.CreateNetworkOptionsConfiguration(groupId), Context.Configuration.Settings.Service.DisableNetworkOptions),
+-				(factory.CreateRemoteConnectionConfiguration(groupId), Context.Configuration.Settings.Service.DisableRemoteConnections),
+-				(factory.CreateSignoutConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableSignout),
+-				(factory.CreateSwitchUserConfiguration(groupId), Context.Configuration.Settings.Service.DisableUserSwitch),
+-				(factory.CreateTaskManagerConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableTaskManager),
+-				(factory.CreateUserPowerOptionsConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisablePowerOptions),
+-				(factory.CreateWindowsUpdateConfiguration(groupId), Context.Configuration.Settings.Service.DisableWindowsUpdate)
+-			};
+-
+-			if (Context.Configuration.Settings.Service.SetVmwareConfiguration)
+-			{
+-				configurations.Add((factory.CreateVmwareOverlayConfiguration(groupId, sid, userName), Context.Configuration.Settings.Service.DisableVmwareOverlay));
+-			}
+-
+-			logger.Info($"Attempting to perform lockdown (feature configuration group: {groupId})...");
+-
+-			foreach (var (configuration, disable) in configurations)
+-			{
+-				success &= TrySet(configuration, disable);
+-
+-				if (!success)
+-				{
+-					break;
+-				}
+-			}
+-
+-			if (success)
+-			{
+-				monitor.Start();
+-				logger.Info("Lockdown successful.");
+-			}
+-			else
+-			{
+-				logger.Error("Lockdown was not successful!");
+-			}
++			logger.Info("Skipping lockdown [patched].");
+ 
+-			return success ? OperationResult.Success : OperationResult.Failed;
++			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Revert()
+ 		{
+-			logger.Info($"Attempting to revert lockdown (feature configuration group: {groupId})...");
+-
+-			var configurations = backup.GetBy(groupId);
+-			var success = true;
+-
+-			monitor.Reset();
+-
+-			foreach (var configuration in configurations)
+-			{
+-				success &= TryRestore(configuration);
+-			}
+-
+-			if (success)
+-			{
+-				logger.Info("Lockdown reversion successful.");
+-			}
+-			else
+-			{
+-				logger.Warn("Lockdown reversion was not successful!");
+-			}
++			logger.Info("Skipping lockdown reversion [patched].");
+ 
+-			return success ? OperationResult.Success : OperationResult.Failed;
++			return OperationResult.Success;
+ 		}
+ 
+ 		private bool TryRestore(IFeatureConfiguration configuration)

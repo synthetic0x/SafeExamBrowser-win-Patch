@@ -1,0 +1,51 @@
+From f33d99f4b069d8a865c9c487c3c7bbfda609952e Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:37 -0400
+Subject: [PATCH] патч клавиатурной залупы и обвязки
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Session/SessionIntegrityOperation.cs      | 24 ++-----------------
+ 1 file changed, 2 insertions(+), 22 deletions(-)
+
+diff --git a/SafeExamBrowser.Runtime/Operations/Session/SessionIntegrityOperation.cs b/SafeExamBrowser.Runtime/Operations/Session/SessionIntegrityOperation.cs
+index e7c2db13..254a4ff7 100644
+--- a/SafeExamBrowser.Runtime/Operations/Session/SessionIntegrityOperation.cs
++++ b/SafeExamBrowser.Runtime/Operations/Session/SessionIntegrityOperation.cs
+@@ -26,32 +26,12 @@ namespace SafeExamBrowser.Runtime.Operations.Session
+ 
+ 		public override OperationResult Perform()
+ 		{
+-			var success = true;
+-
+-			StatusChanged?.Invoke(TextKey.OperationStatus_VerifySessionIntegrity);
+-
+-			success &= InitializeStickyKeys();
+-			success &= VerifyCursors();
+-			success &= VerifyEaseOfAccess();
+-
+-			LogResult(success);
+-
+-			return success ? OperationResult.Success : OperationResult.Failed;
++			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Repeat()
+ 		{
+-			var success = true;
+-
+-			StatusChanged?.Invoke(TextKey.OperationStatus_VerifySessionIntegrity);
+-
+-			success &= InitializeStickyKeys();
+-			success &= VerifyCursors();
+-			success &= VerifyEaseOfAccess();
+-
+-			LogResult(success);
+-
+-			return success ? OperationResult.Success : OperationResult.Failed;
++			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Revert()

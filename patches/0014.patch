@@ -1,0 +1,133 @@
+From 15795d21f2730e29e482e592780fc8fc19094ed2 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:07:55 -0400
+Subject: [PATCH] добавил кнопку входа и выхода из полного экрана
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Windows/BrowserWindow.xaml.cs             | 28 +++++++++++++++++++
+ .../Windows/Taskbar.xaml                      | 14 +++++++++-
+ .../Windows/Taskbar.xaml.cs                   | 10 +++++++
+ 3 files changed, 51 insertions(+), 1 deletion(-)
+
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index 99e2a22b..43216314 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -55,6 +55,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
+ 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
+ 		public IntPtr Handle { get; private set; }
++		internal bool IsMainWindow => isMainWindow;
+ 
+ 		public event AddressChangedEventHandler AddressChanged;
+ 		public event ActionRequestedEventHandler BackwardNavigationRequested;
+@@ -92,6 +93,33 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			InitializeBrowserWindow(browserControl);
+ 		}
+ 
++		public void ToggleFullScreen()
++		{
++			Dispatcher.Invoke(() =>
++			{
++				var fullScreen = WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
++
++				if (fullScreen)
++				{
++					WindowStyle = WindowStyle.SingleBorderWindow;
++					ResizeMode = ResizeMode.CanResize;
++					WindowState = WindowState.Maximized;
++				}
++				else
++				{
++					WindowState = WindowState.Normal;
++					WindowStyle = WindowStyle.None;
++					ResizeMode = ResizeMode.NoResize;
++					Left = 0;
++					Top = 0;
++					Width = SystemParameters.PrimaryScreenWidth;
++					Height = SystemParameters.PrimaryScreenHeight;
++				}
++
++				Activate();
++			});
++		}
++
+ 		public void BringToForeground()
+ 		{
+ 			Dispatcher.Invoke(() =>
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
+index 2089f0d7..21153f44 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
+@@ -11,6 +11,7 @@
+     <Window.Resources>
+         <ResourceDictionary>
+             <ResourceDictionary.MergedDictionaries>
++                <ResourceDictionary Source="../Templates/Buttons.xaml" />
+                 <ResourceDictionary Source="../Templates/Colors.xaml" />
+                 <ResourceDictionary Source="../Templates/ScrollViewers.xaml" />
+             </ResourceDictionary.MergedDictionaries>
+@@ -23,6 +24,7 @@
+             <ColumnDefinition Width="Auto" />
+             <ColumnDefinition Width="Auto" />
+             <ColumnDefinition Width="Auto" />
++            <ColumnDefinition Width="Auto" />
+         </Grid.ColumnDefinitions>
+         <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Template="{StaticResource SmallBarScrollViewer}">
+             <StackPanel x:Name="ApplicationStackPanel" Orientation="Horizontal" />
+@@ -30,6 +32,16 @@
+         <StackPanel Grid.Column="1" x:Name="NotificationStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
+         <StackPanel Grid.Column="2" x:Name="SystemControlStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
+         <local:Clock Grid.Column="3" x:Name="Clock" Foreground="{StaticResource SecondaryTextBrush}" Padding="10,0,10,0" />
+-        <local:QuitButton Grid.Column="4" x:Name="QuitButton" />
++        <Button Grid.Column="4" x:Name="FullScreenButton"
++                Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Stretch" ToolTip="Full screen"
++                Template="{StaticResource TaskbarButton}" VerticalAlignment="Stretch">
++            <Viewbox Width="20" Height="20">
++                <Canvas Width="1024.000" Height="1024.000">
++                    <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
++                          Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
++                </Canvas>
++            </Viewbox>
++        </Button>
++        <local:QuitButton Grid.Column="5" x:Name="QuitButton" />
+     </Grid>
+ </Window>
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index 0649281d..72a94145 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -8,6 +8,7 @@
+ 
+ using System;
+ using System.ComponentModel;
++using System.Linq;
+ using System.Windows;
+ using SafeExamBrowser.Browser.Contracts.Events;
+ using SafeExamBrowser.I18n.Contracts;
+@@ -143,6 +144,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Closing += Taskbar_Closing;
+ 			Loaded += (o, args) => InitializeBounds();
++			FullScreenButton.Click += FullScreenButton_Click;
+ 			QuitButton.Clicked += QuitButton_Clicked;
+ 		}
+ 
+@@ -171,6 +173,14 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			(this as ITaskbar).Focus(true);
+ 		}
+ 
++		private void FullScreenButton_Click(object sender, RoutedEventArgs e)
++		{
++			var windows = Application.Current.Windows.OfType<BrowserWindow>().ToList();
++			var window = windows.FirstOrDefault(w => w.IsMainWindow) ?? windows.FirstOrDefault();
++
++			window?.ToggleFullScreen();
++		}
++
+ 		private void QuitButton_Clicked(CancelEventArgs args)
+ 		{
+ 			QuitButtonClicked?.Invoke(args);

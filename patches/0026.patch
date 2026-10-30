@@ -1,0 +1,56 @@
+From 18309787be5e2f1b1e60070fda684e2be2b74d74 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 22:13:43 -0400
+Subject: [PATCH] таскбар вниз и страницу не перекрывает
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Windows/BrowserWindow.xaml.cs                      | 10 ++++++----
+ .../Windows/Taskbar.xaml.cs                            |  8 +++-----
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index d472341f..e09e2380 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -108,13 +108,15 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 				}
+ 				else
+ 				{
++					var area = SystemParameters.WorkArea;
++
+ 					WindowState = WindowState.Normal;
+ 					WindowStyle = WindowStyle.None;
+ 					ResizeMode = ResizeMode.NoResize;
+-					Left = 0;
+-					Top = 0;
+-					Width = SystemParameters.PrimaryScreenWidth;
+-					Height = SystemParameters.PrimaryScreenHeight;
++					Left = area.Left;
++					Top = area.Top;
++					Width = area.Width;
++					Height = area.Height;
+ 				}
+ 
+ 				Activate();
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index 82f60df8..72a94145 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -129,11 +129,9 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Dispatcher.Invoke(() =>
+ 			{
+-				var area = SystemParameters.WorkArea;
+-
+-				Width = area.Width;
+-				Left = area.Left;
+-				Top = area.Bottom - Height;
++				Width = SystemParameters.PrimaryScreenWidth;
++				Left = 0;
++				Top = SystemParameters.PrimaryScreenHeight - Height;
+ 
+ 				var position = this.TransformToPhysical(Left, Top);
+ 				var size = this.TransformToPhysical(Width, Height);

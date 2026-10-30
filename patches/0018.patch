@@ -1,0 +1,46 @@
+From dfd9be7e8da16a18142bd3a88f04e183b68b65bb Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:08:52 -0400
+Subject: [PATCH] пароль на выхол убран
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Client/Operations/ShellOperation.cs           | 4 ++--
+ .../Responsibilities/ShellResponsibility.cs                   | 3 +--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/SafeExamBrowser.Client/Operations/ShellOperation.cs b/SafeExamBrowser.Client/Operations/ShellOperation.cs
+index 6349753d..6d6aa19b 100644
+--- a/SafeExamBrowser.Client/Operations/ShellOperation.cs
++++ b/SafeExamBrowser.Client/Operations/ShellOperation.cs
+@@ -335,12 +335,12 @@ namespace SafeExamBrowser.Client.Operations
+ 
+ 		private void InitializeQuitButtonForActionCenter()
+ 		{
+-			actionCenter.ShowQuitButton = Context.Settings.Security.AllowTermination;
++			actionCenter.ShowQuitButton = true;
+ 		}
+ 
+ 		private void InitializeQuitButtonForTaskbar()
+ 		{
+-			taskbar.ShowQuitButton = Context.Settings.Security.AllowTermination;
++			taskbar.ShowQuitButton = true;
+ 		}
+ 
+ 		private void InitializeNetworkForActionCenter()
+diff --git a/SafeExamBrowser.Client/Responsibilities/ShellResponsibility.cs b/SafeExamBrowser.Client/Responsibilities/ShellResponsibility.cs
+index 633ca1a2..ca2c6414 100644
+--- a/SafeExamBrowser.Client/Responsibilities/ShellResponsibility.cs
++++ b/SafeExamBrowser.Client/Responsibilities/ShellResponsibility.cs
+@@ -131,8 +131,7 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 
+ 		private bool TryInitiateShutdown()
+ 		{
+-			var hasQuitPassword = !string.IsNullOrEmpty(Settings.Security.QuitPasswordHash);
+-			var initiateShutdown = hasQuitPassword ? TryValidateQuitPassword() : TryConfirmShutdown();
++			var initiateShutdown = TryConfirmShutdown();
+ 			var success = false;
+ 
+ 			if (initiateShutdown)

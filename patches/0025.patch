@@ -1,0 +1,44 @@
+From b800f3212f08e47837cbc058c55fd2792eff4838 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 22:01:27 -0400
+Subject: [PATCH] фуллскрин и таскбар починил
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Windows/BrowserWindow.xaml.cs                         | 1 +
+ .../Windows/Taskbar.xaml.cs                               | 8 +++++---
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index 43216314..d472341f 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -103,6 +103,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 				{
+ 					WindowStyle = WindowStyle.SingleBorderWindow;
+ 					ResizeMode = ResizeMode.CanResize;
++					WindowState = WindowState.Normal;
+ 					WindowState = WindowState.Maximized;
+ 				}
+ 				else
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index 72a94145..82f60df8 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -129,9 +129,11 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Dispatcher.Invoke(() =>
+ 			{
+-				Width = SystemParameters.PrimaryScreenWidth;
+-				Left = 0;
+-				Top = SystemParameters.PrimaryScreenHeight - Height;
++				var area = SystemParameters.WorkArea;
++
++				Width = area.Width;
++				Left = area.Left;
++				Top = area.Bottom - Height;
+ 
+ 				var position = this.TransformToPhysical(Left, Top);
+ 				var size = this.TransformToPhysical(Width, Height);

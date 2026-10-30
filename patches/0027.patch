@@ -1,0 +1,150 @@
+From 4be68e734a228e32c7c868912dce26d95922b408 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 22:20:55 -0400
+Subject: [PATCH] фуллскрин в тулбаре, таскбар только в полном экране
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Windows/BrowserWindow.xaml                | 13 +++++--
+ .../Windows/BrowserWindow.xaml.cs             | 35 +++++++++++++++++++
+ .../Windows/Taskbar.xaml.cs                   | 10 +++++-
+ 3 files changed, 55 insertions(+), 3 deletions(-)
+
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
+index a7a7753b..ab7b906b 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
+@@ -36,13 +36,22 @@
+                         <ColumnDefinition Width="*" />
+                         <ColumnDefinition Width="Auto" />
+                         <ColumnDefinition Width="Auto" />
++                        <ColumnDefinition Width="Auto" />
+                     </Grid.ColumnDefinitions>
+                     <Button Grid.Column="0" x:Name="HomeButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="1" x:Name="BackwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="2" x:Name="ForwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="3" x:Name="ReloadButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <TextBox Grid.Column="4" x:Name="UrlTextBox" Height="25" HorizontalAlignment="Stretch" Margin="5,0" Padding="5,0" VerticalContentAlignment="Center" />
+-                    <Button Grid.Column="5" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
++                    <Button Grid.Column="5" x:Name="FullScreenButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center">
++                        <Viewbox Width="18" Height="18">
++                            <Canvas Width="1024.000" Height="1024.000">
++                                <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
++                                      Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
++                            </Canvas>
++                        </Viewbox>
++                    </Button>
++                    <Button Grid.Column="6" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
+                         <fa:ImageAwesome Icon="Download" />
+                     </Button>
+                     <Popup x:Name="DownloadsPopup" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
+@@ -50,7 +59,7 @@
+                             <StackPanel x:Name="Downloads" Orientation="Vertical" />
+                         </Border>
+                     </Popup>
+-                    <Button Grid.Column="6" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
++                    <Button Grid.Column="7" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Popup x:Name="MenuPopup" IsOpen="False" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
+                         <Border Background="{StaticResource BackgroundBrush}" BorderBrush="LightGray" BorderThickness="1,0,1,1" Width="250">
+                             <StackPanel Orientation="Vertical">
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index e09e2380..4d71c7d4 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -55,6 +55,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
+ 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
+ 		public IntPtr Handle { get; private set; }
++		internal bool IsFullScreen => WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
+ 		internal bool IsMainWindow => isMainWindow;
+ 
+ 		public event AddressChangedEventHandler AddressChanged;
+@@ -119,10 +120,35 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 					Height = area.Height;
+ 				}
+ 
++				UpdateTaskbarVisibility();
+ 				Activate();
+ 			});
+ 		}
+ 
++		private void UpdateTaskbarVisibility()
++		{
++			if (!isMainWindow)
++			{
++				return;
++			}
++
++			var taskbar = System.Windows.Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
++
++			if (taskbar == default)
++			{
++				return;
++			}
++
++			if (IsFullScreen)
++			{
++				taskbar.Show();
++			}
++			else
++			{
++				taskbar.Hide();
++			}
++		}
++
+ 		public void BringToForeground()
+ 		{
+ 			Dispatcher.Invoke(() =>
+@@ -283,6 +309,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private void BrowserWindow_KeyDown(object sender, KeyEventArgs e)
+ 		{
++			if (e.Key == Key.F11)
++			{
++				ToggleFullScreen();
++				e.Handled = true;
++				return;
++			}
++
+ 			if (e.Key == Key.Tab)
+ 			{
+ 				var hasShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+@@ -458,6 +491,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			ApplySettings();
+ 			LoadIcons();
+ 			LoadText();
++			Loaded += (o, args) => UpdateTaskbarVisibility();
+ 		}
+ 
+ 		private void RegisterEvents()
+@@ -476,6 +510,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			FindMenuButton.Click += (o, args) => ShowFindbar();
+ 			FindTextBox.KeyUp += FindTextBox_KeyUp;
+ 			ForwardButton.Click += (o, args) => ForwardNavigationRequested?.Invoke();
++			FullScreenButton.Click += (o, args) => ToggleFullScreen();
+ 			HomeButton.Click += (o, args) => HomeNavigationRequested?.Invoke();
+ 			Loaded += BrowserWindow_Loaded;
+ 			MenuButton.Click += MenuButton_Click;
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index 72a94145..99bc814c 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -165,7 +165,15 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		public new void Show()
+ 		{
+-			Dispatcher.Invoke(base.Show);
++			Dispatcher.Invoke(() =>
++			{
++				var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
++
++				if (main == default || main.IsFullScreen)
++				{
++					base.Show();
++				}
++			});
+ 		}
+ 
+ 		private void Activator_Activated()

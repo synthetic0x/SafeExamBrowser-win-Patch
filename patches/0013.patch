@@ -1,0 +1,52 @@
+From 63494ece172227d0c218c631e9f6735c31ee6d3e Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:07:55 -0400
+Subject: [PATCH] блокировка мыши вырезана
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Mouse/MouseInterceptor.cs                   | 17 +----------------
+ 1 file changed, 1 insertion(+), 16 deletions(-)
+
+diff --git a/SafeExamBrowser.Monitoring/Mouse/MouseInterceptor.cs b/SafeExamBrowser.Monitoring/Mouse/MouseInterceptor.cs
+index a031ba23..99c3d5ab 100644
+--- a/SafeExamBrowser.Monitoring/Mouse/MouseInterceptor.cs
++++ b/SafeExamBrowser.Monitoring/Mouse/MouseInterceptor.cs
+@@ -18,15 +18,11 @@ namespace SafeExamBrowser.Monitoring.Mouse
+ 	public class MouseInterceptor : IMouseInterceptor
+ 	{
+ 		private Guid? hookId;
+-		private ILogger logger;
+ 		private INativeMethods nativeMethods;
+-		private MouseSettings settings;
+ 
+ 		public MouseInterceptor(ILogger logger, INativeMethods nativeMethods, MouseSettings settings)
+ 		{
+-			this.logger = logger;
+ 			this.nativeMethods = nativeMethods;
+-			this.settings = settings;
+ 		}
+ 
+ 		public void Start()
+@@ -44,18 +40,7 @@ namespace SafeExamBrowser.Monitoring.Mouse
+ 
+ 		private bool MouseHookCallback(MouseButton button, MouseButtonState state, MouseInformation info)
+ 		{
+-			var block = false;
+-
+-			block |= button == MouseButton.Auxiliary;
+-			block |= button == MouseButton.Middle && !settings.AllowMiddleButton;
+-			block |= button == MouseButton.Right && !settings.AllowRightButton;
+-
+-			if (block)
+-			{
+-				logger.Info($"Blocked {button.ToString().ToLower()} mouse button when {state.ToString().ToLower()}.");
+-			}
+-
+-			return block;
++			return false;
+ 		}
+ 	}
+ }

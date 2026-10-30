@@ -1,0 +1,42 @@
+From 7604c7ae50c84ae440196fab3e201d96035acd86 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:42:52 -0400
+Subject: [PATCH] юрл фильтр убран можно прям в этом же браузере чатгпт нахуй
+ открыть
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Filters/RequestFilter.cs                   | 18 +-----------------
+ 1 file changed, 1 insertion(+), 17 deletions(-)
+
+diff --git a/SafeExamBrowser.Browser/Filters/RequestFilter.cs b/SafeExamBrowser.Browser/Filters/RequestFilter.cs
+index cb0d6dee..39bea1bb 100644
+--- a/SafeExamBrowser.Browser/Filters/RequestFilter.cs
++++ b/SafeExamBrowser.Browser/Filters/RequestFilter.cs
+@@ -44,23 +44,7 @@ namespace SafeExamBrowser.Browser.Filters
+ 
+ 		public FilterResult Process(Request request)
+ 		{
+-			foreach (var rule in blockRules)
+-			{
+-				if (rule.IsMatch(request))
+-				{
+-					return FilterResult.Block;
+-				}
+-			}
+-
+-			foreach (var rule in allowRules)
+-			{
+-				if (rule.IsMatch(request))
+-				{
+-					return FilterResult.Allow;
+-				}
+-			}
+-
+-			return Default;
++			return FilterResult.Allow;
+ 		}
+ 	}
+ }

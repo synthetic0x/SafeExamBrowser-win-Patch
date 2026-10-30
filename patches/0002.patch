@@ -1,0 +1,33 @@
+From 6fbbb45c543141116b613e53040b03e2a8611fb9 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:32 -0400
+Subject: [PATCH] на виртуалку похуй, хоть на тостере запускай
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Monitoring/VirtualMachineDetector.cs | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/SafeExamBrowser.Monitoring/VirtualMachineDetector.cs b/SafeExamBrowser.Monitoring/VirtualMachineDetector.cs
+index b0092d98..f514f3c1 100644
+--- a/SafeExamBrowser.Monitoring/VirtualMachineDetector.cs
++++ b/SafeExamBrowser.Monitoring/VirtualMachineDetector.cs
+@@ -72,15 +72,7 @@ namespace SafeExamBrowser.Monitoring
+ 		{
+ 			var isVm = false;
+ 
+-			isVm |= HasNoSystemHardware();
+-			isVm |= HasVirtualDevice();
+-			isVm |= HasVirtualMacAddress();
+-			isVm |= IsVirtualCpu();
+-			isVm |= IsVirtualRegistry();
+-			isVm |= IsVirtualSystem(systemInfo.BiosInfo, systemInfo.Manufacturer, systemInfo.Model);
+-			isVm |= integrityModule.IsVirtualMachine(out var manufacturer, out var probability);
+-
+-			logger.Debug($"Computer '{systemInfo.Name}' appears {(isVm ? "" : "not ")}to be a virtual machine{(isVm ? $" ({manufacturer}, {probability}%)" : "")}.");
++			logger.Debug($"Computer '{systemInfo.Name}' is treated as a non-virtual machine [patched].");
+ 
+ 			return isVm;
+ 		}

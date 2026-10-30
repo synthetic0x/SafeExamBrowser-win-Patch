@@ -1,0 +1,25 @@
+From 8aa7ffef92fd92ce76001a281dcd0f500afb8b69 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:08:23 -0400
+Subject: [PATCH] служба нахуй
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Runtime/Operations/Session/ServiceOperation.cs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/SafeExamBrowser.Runtime/Operations/Session/ServiceOperation.cs b/SafeExamBrowser.Runtime/Operations/Session/ServiceOperation.cs
+index 21d48e73..efce9e4e 100644
+--- a/SafeExamBrowser.Runtime/Operations/Session/ServiceOperation.cs
++++ b/SafeExamBrowser.Runtime/Operations/Session/ServiceOperation.cs
+@@ -127,7 +127,7 @@ namespace SafeExamBrowser.Runtime.Operations.Session
+ 
+ 		private bool TryInitializeConnection()
+ 		{
+-			var mandatory = Context.Next.Settings.Service.Policy == ServicePolicy.Mandatory;
++			var mandatory = false;
+ 			var warn = Context.Next.Settings.Service.Policy == ServicePolicy.Warn;
+ 			var connected = serviceProxy.Connect();
+ 			var success = connected || !mandatory;

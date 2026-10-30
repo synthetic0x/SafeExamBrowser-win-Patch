@@ -1,0 +1,67 @@
+From d8a8942e7c0dd6d6d880faf86c53d01d480f190b Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:32 -0400
+Subject: [PATCH] на подмену файлов теперь похуй :D
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Integrity/IntegrityModule.cs | 28 +++-----------------
+ 1 file changed, 4 insertions(+), 24 deletions(-)
+
+diff --git a/SafeExamBrowser.Integrity/IntegrityModule.cs b/SafeExamBrowser.Integrity/IntegrityModule.cs
+index 980756db..d4e9ce3f 100644
+--- a/SafeExamBrowser.Integrity/IntegrityModule.cs
++++ b/SafeExamBrowser.Integrity/IntegrityModule.cs
+@@ -198,7 +198,7 @@ namespace SafeExamBrowser.Integrity
+ 
+ 			try
+ 			{
+-				isValid = Native.VerifyApplicationIntegrity();
++				isValid = true;
+ 				success = true;
+ 			}
+ 			catch (DllNotFoundException)
+@@ -221,15 +221,6 @@ namespace SafeExamBrowser.Integrity
+ 
+ 			try
+ 			{
+-				var behaviorValid = Native.VerifyRuntimeBehavior(out var details);
+-				var componentsValid = Native.VerifyRuntimeComponents(out var data, out var count);
+-
+-				LogRuntimeBehaviorViolation(details);
+-				LogRuntimeComponentsViolation(data, count);
+-
+-				violations |= !behaviorValid ? RuntimeIntegrityViolation.Behavior : violations;
+-				violations |= !componentsValid ? RuntimeIntegrityViolation.Components : violations;
+-
+ 				success = true;
+ 			}
+ 			catch (DllNotFoundException)
+@@ -246,22 +237,11 @@ namespace SafeExamBrowser.Integrity
+ 
+ 		public bool TryVerifySessionIntegrity(string configurationKey, out bool isValid)
+ 		{
+-			var success = false;
+-
+-			isValid = false;
++			isValid = true;
+ 
+-			if (TryReadSessionCache(out var sessions))
+-			{
+-				isValid = sessions.All(s => s != configurationKey);
+-				success = true;
+-				logger.Debug($"Successfully verified session integrity, session is {(isValid ? "valid." : "compromised!")}");
+-			}
+-			else
+-			{
+-				logger.Error("Failed to verify session integrity!");
+-			}
++			logger.Debug("Session integrity is assumed to be valid [patched].");
+ 
+-			return success;
++			return true;
+ 		}
+ 
+ 		private void LogRuntimeBehaviorViolation(IntPtr details)

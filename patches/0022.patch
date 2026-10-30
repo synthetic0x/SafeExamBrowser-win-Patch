@@ -1,0 +1,61 @@
+From 042ed1823f0b72d8fe4f3fdbe5bf5fca1ad0dbb2 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 21:41:20 -0400
+Subject: [PATCH] установщик без подписи
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ Setup/Setup.wixproj | 34 ++--------------------------------
+ 1 file changed, 2 insertions(+), 32 deletions(-)
+
+diff --git a/Setup/Setup.wixproj b/Setup/Setup.wixproj
+index ab16ab56..f9a6ae4f 100644
+--- a/Setup/Setup.wixproj
++++ b/Setup/Setup.wixproj
+@@ -1,4 +1,4 @@
+-<?xml version="1.0" encoding="utf-8"?>
++﻿<?xml version="1.0" encoding="utf-8"?>
+ <Project ToolsVersion="4.0" DefaultTargets="Build" InitialTargets="EnsureWixToolsetInstalled" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <PropertyGroup>
+     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+@@ -131,37 +131,7 @@ git -C $(SolutionDir) checkout -- Setup/Components/Service.wxs</PostBuildEvent>
+ 	</Target>
+ 	-->
+   <PropertyGroup>
+-    <SignOutput>true</SignOutput>
+-  </PropertyGroup>
+-  <Target Name="SignCabs">
+-    <Exec Command="signtool sign /sha1 ecac9df025f5d208f6190fc4d6f9d329576598c7 /sm /tr http://timestamp.digicert.com /td sha256 /fd sha256 &quot;%(SignCabs.FullPath)&quot;" />
+-  </Target>
+-  <Target Name="SignMsi">
+-    <Exec Command="signtool sign /sha1 ecac9df025f5d208f6190fc4d6f9d329576598c7 /sm /tr http://timestamp.digicert.com /td sha256 /fd sha256 /d &quot;Safe Exam Browser&quot; &quot;%(SignMsi.FullPath)&quot;" />
+-  </Target>
+-  <PropertyGroup>
+-    <PreBuildEvent>set SIGN=powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(ProjectDir)Sign.ps1" -Directory
+-
+-%25SIGN%25 "$(SolutionDir)SafeExamBrowser.Runtime\bin\$(PlatformName)\$(ConfigurationName)"
+-
+-IF errorlevel 1 EXIT 1
+-
+-
+-%25SIGN%25 "$(SolutionDir)SebWindowsConfig\bin\$(PlatformName)\$(ConfigurationName)"
+-
+-IF errorlevel 1 EXIT 1
+-
+-
+-%25SIGN%25 "$(SolutionDir)SafeExamBrowser.ResetUtility\bin\$(PlatformName)\$(ConfigurationName)"
+-
+-IF errorlevel 1 EXIT 1
+-
+-
+-%25SIGN%25 "$(SolutionDir)SafeExamBrowser.Service\bin\$(PlatformName)\$(ConfigurationName)"
+-
+-IF errorlevel 1 EXIT 1
+-
+-"$(WIX)bin\heat.exe" dir "$(SolutionDir)SafeExamBrowser.Runtime\bin\$(PlatformName)\$(ConfigurationName)" -nologo -ag -g1 -scom -srd -sreg -cg ApplicationComponents -dr ApplicationDirectory -sfrag -var var.SafeExamBrowser.Runtime.TargetDir -out $(ProjectDir)Components\Application.wxs -t $(ProjectDir)Components\Application.xslt
++    <PreBuildEvent>"$(WIX)bin\heat.exe" dir "$(SolutionDir)SafeExamBrowser.Runtime\bin\$(PlatformName)\$(ConfigurationName)" -nologo -ag -g1 -scom -srd -sreg -cg ApplicationComponents -dr ApplicationDirectory -sfrag -var var.SafeExamBrowser.Runtime.TargetDir -out $(ProjectDir)Components\Application.wxs -t $(ProjectDir)Components\Application.xslt
+ "$(WIX)bin\heat.exe" dir "$(SolutionDir)SebWindowsConfig\bin\$(PlatformName)\$(ConfigurationName)" -nologo -ag -g1 -scom -srd -sreg -cg ConfigurationComponents -dr ConfigurationDirectory -sfrag -var var.SebWindowsConfig.TargetDir -out $(ProjectDir)Components\Configuration.wxs -t $(ProjectDir)Components\Configuration.xslt
+ "$(WIX)bin\heat.exe" dir "$(SolutionDir)SafeExamBrowser.ResetUtility\bin\$(PlatformName)\$(ConfigurationName)" -nologo -ag -g1 -scom -srd -sreg -cg ResetComponents -dr ResetDirectory -sfrag -var var.SafeExamBrowser.ResetUtility.TargetDir -out $(ProjectDir)Components\Reset.wxs -t $(ProjectDir)Components\Reset.xslt
+ "$(WIX)bin\heat.exe" dir "$(SolutionDir)SafeExamBrowser.Service\bin\$(PlatformName)\$(ConfigurationName)" -nologo -ag -g1 -scom -srd -sreg -cg ServiceComponents -dr ServiceDirectory -sfrag -var var.SafeExamBrowser.Service.TargetDir -out $(ProjectDir)Components\Service.wxs -t $(ProjectDir)Components\Service.xslt</PreBuildEvent>

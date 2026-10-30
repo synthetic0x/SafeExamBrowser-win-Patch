@@ -1,0 +1,35 @@
+From a4a654b8af90e63744afc18634a55c51d0ec778c Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:52 -0400
+Subject: [PATCH] перехват захвата экрана патч
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Operations/WindowGuardOperation.cs               | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/SafeExamBrowser.Client/Operations/WindowGuardOperation.cs b/SafeExamBrowser.Client/Operations/WindowGuardOperation.cs
+index cb0b944d..9e59656f 100644
+--- a/SafeExamBrowser.Client/Operations/WindowGuardOperation.cs
++++ b/SafeExamBrowser.Client/Operations/WindowGuardOperation.cs
+@@ -32,16 +32,8 @@ namespace SafeExamBrowser.Client.Operations
+ 			logger.Info("Initializing window guard...");
+ 			StatusChanged?.Invoke(TextKey.OperationStatus_InitializeWindowGuard);
+ 
+-			if (Context.Settings.Proctoring.Enabled || Context.Settings.Security.AllowWindowCapture)
+-			{
+-				guard.Deactivate();
+-				logger.Info($"Deactivated window guard because {(Context.Settings.Proctoring.Enabled ? "proctoring" : "window capturing")} is enabled.");
+-			}
+-			else
+-			{
+-				guard.Activate();
+-				logger.Info("Activated window guard.");
+-			}
++			guard.Deactivate();
++			logger.Info("Deactivated window guard [patched].");
+ 
+ 			return OperationResult.Success;
+ 		}

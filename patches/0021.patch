@@ -1,0 +1,59 @@
+From e9fa449c51151bada91920c86402df27a2da35f4 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:42:58 -0400
+Subject: [PATCH] браузер теперь полноценный хоть бля за место файрфокса прям
+ вахай блять конфетка
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Browser/BrowserApplication.cs | 35 +++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/SafeExamBrowser.Browser/BrowserApplication.cs b/SafeExamBrowser.Browser/BrowserApplication.cs
+index 7336f6c2..b9a26b4a 100644
+--- a/SafeExamBrowser.Browser/BrowserApplication.cs
++++ b/SafeExamBrowser.Browser/BrowserApplication.cs
+@@ -89,6 +89,41 @@ namespace SafeExamBrowser.Browser
+ 				Logger = logger,
+ 				Settings = settings
+ 			};
++
++			ApplyPatchedSettings(settings);
++		}
++
++		/// <summary>
++		/// </summary>
++		private static void ApplyPatchedSettings(BrowserSettings settings)
++		{
++			settings.AllowConfigurationDownloads = true;
++			settings.AllowCustomDownAndUploadLocation = true;
++			settings.AllowDownloads = true;
++			settings.AllowFind = true;
++			settings.AllowPageZoom = true;
++			settings.AllowPdfReader = true;
++			settings.AllowPdfReaderToolbar = true;
++			settings.AllowPrint = true;
++			settings.AllowSpellChecking = true;
++			settings.AllowUploads = true;
++			settings.HomeNavigationRequiresPassword = false;
++			settings.PopupPolicy = SafeExamBrowser.Settings.Browser.PopupPolicy.Allow;
++			settings.ShowFileSystemElementPath = true;
++			settings.UseIsolatedClipboard = false;
++
++			foreach (var window in new[] { settings.MainWindow, settings.AdditionalWindow })
++			{
++				window.AllowAddressBar = true;
++				window.AllowBackwardNavigation = true;
++				window.AllowDeveloperConsole = true;
++				window.AllowForwardNavigation = true;
++				window.AllowReloading = true;
++				window.ShowHomeButton = true;
++				window.ShowReloadButton = true;
++				window.ShowReloadWarning = false;
++				window.ShowToolbar = true;
++			}
+ 		}
+ 
+ 		public void Focus(bool forward)

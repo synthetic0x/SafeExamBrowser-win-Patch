@@ -1,0 +1,53 @@
+From ccffe3e3a125fdea398481f822f3a0bbd173e09c Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:32 -0400
+Subject: [PATCH] проверка рдп вырезана
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Monitoring/RemoteSessionDetector.cs | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/SafeExamBrowser.Monitoring/RemoteSessionDetector.cs b/SafeExamBrowser.Monitoring/RemoteSessionDetector.cs
+index 42ffc879..e0209097 100644
+--- a/SafeExamBrowser.Monitoring/RemoteSessionDetector.cs
++++ b/SafeExamBrowser.Monitoring/RemoteSessionDetector.cs
+@@ -1,12 +1,11 @@
+ ﻿/*
+  * Copyright (c) 2026 ETH Zürich, IT Services
+- * 
++ *
+  * This Source Code Form is subject to the terms of the Mozilla Public
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  */
+ 
+-using System.Windows.Forms;
+ using SafeExamBrowser.Integrity.Contracts;
+ using SafeExamBrowser.Logging.Contracts;
+ using SafeExamBrowser.Monitoring.Contracts;
+@@ -15,20 +14,18 @@ namespace SafeExamBrowser.Monitoring
+ {
+ 	public class RemoteSessionDetector : IRemoteSessionDetector
+ 	{
+-		private readonly IIntegrityModule integrityModule;
+ 		private readonly ILogger logger;
+ 
+ 		public RemoteSessionDetector(IIntegrityModule integrityModule, ILogger logger)
+ 		{
+ 			this.logger = logger;
+-			this.integrityModule = integrityModule;
+ 		}
+ 
+ 		public bool IsRemoteSession()
+ 		{
+-			var isRemoteSession = SystemInformation.TerminalServerSession || integrityModule.IsRemoteSession();
++			var isRemoteSession = false;
+ 
+-			logger.Debug($"Current user session appears {(isRemoteSession ? "" : "not ")}to be a remote session.");
++			logger.Debug($"Current user session appears {(isRemoteSession ? "" : "not ")}to be a remote session [patched].");
+ 
+ 			return isRemoteSession;
+ 		}

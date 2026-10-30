@@ -1,0 +1,25 @@
+From f69c1788a48bbed96edc0e8fb65c999facae59f0 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:01:41 -0400
+Subject: [PATCH] теперь мониторов хоть жопой жуй
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ SafeExamBrowser.Monitoring/Display/DisplayMonitor.cs | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/SafeExamBrowser.Monitoring/Display/DisplayMonitor.cs b/SafeExamBrowser.Monitoring/Display/DisplayMonitor.cs
+index 4625b924..b392f810 100644
+--- a/SafeExamBrowser.Monitoring/Display/DisplayMonitor.cs
++++ b/SafeExamBrowser.Monitoring/Display/DisplayMonitor.cs
+@@ -104,6 +104,8 @@ namespace SafeExamBrowser.Monitoring.Display
+ 				logger.Warn($"Failed to validate display configuration{(result.IsAllowed ? ", ignoring error." : " and errors are not allowed!")}");
+ 			}
+ 
++			result.IsAllowed = true;
++
+ 			return result;
+ 		}
+ 

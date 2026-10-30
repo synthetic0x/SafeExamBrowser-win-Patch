@@ -1,0 +1,135 @@
+From 486332622bbbdc0c6647230f80a3bb90acc86419 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 14:07:55 -0400
+Subject: [PATCH] киоскмод нахуй
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../MonitoringResponsibility.cs               |  5 +-
+ .../Operations/Session/KioskModeOperation.cs  | 63 +------------------
+ 2 files changed, 3 insertions(+), 65 deletions(-)
+
+diff --git a/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs b/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
+index e0ccc4ad..add93511 100644
+--- a/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
++++ b/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
+@@ -29,7 +29,6 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 		private readonly IApplicationMonitor applicationMonitor;
+ 		private readonly ICoordinator coordinator;
+ 		private readonly IDisplayMonitor displayMonitor;
+-		private readonly IExplorerShell explorerShell;
+ 		private readonly ISystemSentinel sentinel;
+ 		private readonly ITaskbar taskbar;
+ 		private readonly IText text;
+@@ -50,7 +49,6 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 			this.applicationMonitor = applicationMonitor;
+ 			this.coordinator = coordinator;
+ 			this.displayMonitor = displayMonitor;
+-			this.explorerShell = explorerShell;
+ 			this.sentinel = sentinel;
+ 			this.taskbar = taskbar;
+ 			this.text = text;
+@@ -124,8 +122,7 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 
+ 		private void ApplicationMonitor_ExplorerStarted()
+ 		{
+-			Logger.Info("Trying to terminate Windows explorer...");
+-			explorerShell.Terminate();
++			Logger.Info("Explorer started, skipping termination [patched].");
+ 
+ 			Logger.Info("Re-initializing working area...");
+ 			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
+diff --git a/SafeExamBrowser.Runtime/Operations/Session/KioskModeOperation.cs b/SafeExamBrowser.Runtime/Operations/Session/KioskModeOperation.cs
+index 6890f5a3..7c9010e4 100644
+--- a/SafeExamBrowser.Runtime/Operations/Session/KioskModeOperation.cs
++++ b/SafeExamBrowser.Runtime/Operations/Session/KioskModeOperation.cs
+@@ -21,7 +21,6 @@ namespace SafeExamBrowser.Runtime.Operations.Session
+ 		private readonly IExplorerShell explorerShell;
+ 		private readonly IProcessFactory processFactory;
+ 
+-		private KioskMode? activeMode;
+ 		private IDesktop customDesktop;
+ 		private IDesktop originalDesktop;
+ 
+@@ -42,77 +41,19 @@ namespace SafeExamBrowser.Runtime.Operations.Session
+ 
+ 		public override OperationResult Perform()
+ 		{
+-			Logger.Info($"Initializing kiosk mode '{Context.Next.Settings.Security.KioskMode}'...");
+-			StatusChanged?.Invoke(TextKey.OperationStatus_InitializeKioskMode);
+-
+-			activeMode = Context.Next.Settings.Security.KioskMode;
+-
+-			switch (Context.Next.Settings.Security.KioskMode)
+-			{
+-				case KioskMode.CreateNewDesktop:
+-					CreateCustomDesktop();
+-					break;
+-				case KioskMode.DisableExplorerShell:
+-					TerminateExplorerShell();
+-					break;
+-			}
++			Logger.Info("Skipping kiosk mode initialization [patched].");
+ 
+ 			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Repeat()
+ 		{
+-			var newMode = Context.Next.Settings.Security.KioskMode;
+-
+-			if (activeMode == newMode)
+-			{
+-				Logger.Info($"New kiosk mode '{newMode}' is the same as the currently active mode, skipping re-initialization...");
+-			}
+-			else
+-			{
+-				Logger.Info($"Switching from kiosk mode '{activeMode}' to '{newMode}'...");
+-				StatusChanged?.Invoke(TextKey.OperationStatus_InitializeKioskMode);
+-
+-				switch (activeMode)
+-				{
+-					case KioskMode.CreateNewDesktop:
+-						CloseCustomDesktop();
+-						break;
+-					case KioskMode.DisableExplorerShell:
+-						RestartExplorerShell();
+-						break;
+-				}
+-
+-				activeMode = newMode;
+-
+-				switch (newMode)
+-				{
+-					case KioskMode.CreateNewDesktop:
+-						CreateCustomDesktop();
+-						break;
+-					case KioskMode.DisableExplorerShell:
+-						TerminateExplorerShell();
+-						break;
+-				}
+-			}
+-
+ 			return OperationResult.Success;
+ 		}
+ 
+ 		public override OperationResult Revert()
+ 		{
+-			Logger.Info($"Reverting kiosk mode '{activeMode}'...");
+-			StatusChanged?.Invoke(TextKey.OperationStatus_RevertKioskMode);
+-
+-			switch (activeMode)
+-			{
+-				case KioskMode.CreateNewDesktop:
+-					CloseCustomDesktop();
+-					break;
+-				case KioskMode.DisableExplorerShell:
+-					RestartExplorerShell();
+-					break;
+-			}
++			Logger.Info("Skipping kiosk mode reversal [patched].");
+ 
+ 			return OperationResult.Success;
+ 		}
