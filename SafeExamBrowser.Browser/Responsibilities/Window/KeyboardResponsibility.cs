@@ -8,6 +8,7 @@
 
 using SafeExamBrowser.Browser.Contracts.Events;
 using SafeExamBrowser.Browser.Handlers;
+using SafeExamBrowser.UserInterface.Contracts.Browser;
 
 namespace SafeExamBrowser.Browser.Responsibilities.Window
 {
@@ -33,6 +34,10 @@ namespace SafeExamBrowser.Browser.Responsibilities.Window
 		private void RegisterEvents()
 		{
 			keyboardHandler.FindRequested += KeyboardHandler_FindRequested;
+			if (Context.IsMainWindow && Window is IFullScreenBrowserWindow fullScreenWindow)
+			{
+				keyboardHandler.FullScreenRequested += fullScreenWindow.ToggleFullScreen;
+			}
 			keyboardHandler.FocusAddressBarRequested += KeyboardHandler_FocusAddressBarRequested;
 			keyboardHandler.HomeNavigationRequested += HomeNavigationRequested;
 			keyboardHandler.ReloadRequested += ReloadRequested;

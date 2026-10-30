@@ -11,7 +11,6 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Templates/Buttons.xaml" />
                 <ResourceDictionary Source="../Templates/Colors.xaml" />
                 <ResourceDictionary Source="../Templates/ScrollViewers.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -24,7 +23,6 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Template="{StaticResource SmallBarScrollViewer}">
             <StackPanel x:Name="ApplicationStackPanel" Orientation="Horizontal" />
@@ -32,16 +30,6 @@
         <StackPanel Grid.Column="1" x:Name="NotificationStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
         <StackPanel Grid.Column="2" x:Name="SystemControlStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
         <local:Clock Grid.Column="3" x:Name="Clock" Foreground="{StaticResource SecondaryTextBrush}" Padding="10,0,10,0" />
-        <Button Grid.Column="4" x:Name="FullScreenButton"
-                Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Stretch" ToolTip="Full screen"
-                Template="{StaticResource TaskbarButton}" VerticalAlignment="Stretch">
-            <Viewbox Width="20" Height="20">
-                <Canvas Width="1024.000" Height="1024.000">
-                    <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                          Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
-                </Canvas>
-            </Viewbox>
-        </Button>
-        <local:QuitButton Grid.Column="5" x:Name="QuitButton" />
+        <local:QuitButton Grid.Column="4" x:Name="QuitButton" />
     </Grid>
 </Window>

@@ -32,7 +32,7 @@ using SafeExamBrowser.UserInterface.Shared.Utilities;
 
 namespace SafeExamBrowser.UserInterface.Desktop.Windows
 {
-	internal partial class BrowserWindow : Window, IBrowserWindow
+	internal partial class BrowserWindow : Window, IBrowserWindow, IFullScreenBrowserWindow
 	{
 		private const string CLEAR_FIND_TERM = "thisisahacktoclearthesearchresultsasitappearsthatthereisnosuchfunctionalityincef";
 
@@ -45,6 +45,12 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		private WindowClosedEventHandler closed;
 		private WindowClosingEventHandler closing;
 		private bool browserControlGetsFocusFromTaskbar;
+		private bool isFullScreen;
+		private bool hasSavedWindowState;
+		private Rect savedBounds;
+		private WindowState savedWindowState;
+		private WindowStyle savedWindowStyle;
+		private ResizeMode savedResizeMode;
 		private IInputElement tabKeyDownFocusElement;
 
 		private WindowSettings WindowSettings
@@ -55,7 +61,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
 		public IntPtr Handle { get; private set; }
-		internal bool IsFullScreen => WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
+		internal bool IsFullScreen => isFullScreen;
 		internal bool IsMainWindow => isMainWindow;
 
 		public event AddressChangedEventHandler AddressChanged;
@@ -96,56 +102,76 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		public void ToggleFullScreen()
 		{
-			Dispatcher.Invoke(() =>
+			Dispatcher.BeginInvoke((Action) (() =>
 			{
-				var fullScreen = WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
-
-				if (fullScreen)
+				if (!isMainWindow)
 				{
-					WindowStyle = WindowStyle.SingleBorderWindow;
-					ResizeMode = ResizeMode.CanResize;
+					return;
+				}
+
+				if (isFullScreen)
+				{
+					isFullScreen = false;
+					UpdateTaskbarVisibility();
 					WindowState = WindowState.Normal;
-					WindowState = WindowState.Maximized;
+
+					if (hasSavedWindowState)
+					{
+						WindowStyle = savedWindowStyle;
+						ResizeMode = savedResizeMode;
+						Left = savedBounds.Left;
+						Top = savedBounds.Top;
+						Width = savedBounds.Width;
+						Height = savedBounds.Height;
+						WindowState = savedWindowState;
+					}
+					else
+					{
+						WindowStyle = WindowStyle.SingleBorderWindow;
+						ResizeMode = ResizeMode.CanResize;
+						WindowState = WindowState.Maximized;
+					}
 				}
 				else
 				{
-					var area = SystemParameters.WorkArea;
-
+					savedBounds = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
+					savedWindowState = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
+					savedWindowStyle = WindowStyle;
+					savedResizeMode = ResizeMode;
+					hasSavedWindowState = true;
+					isFullScreen = true;
 					WindowState = WindowState.Normal;
 					WindowStyle = WindowStyle.None;
 					ResizeMode = ResizeMode.NoResize;
-					Left = area.Left;
-					Top = area.Top;
-					Width = area.Width;
-					Height = area.Height;
+					UpdateTaskbarVisibility();
+					UpdateFullScreenBounds();
 				}
 
-				UpdateTaskbarVisibility();
 				Activate();
-			});
+			}));
+		}
+
+		internal void UpdateFullScreenBounds()
+		{
+			if (!isMainWindow || !isFullScreen)
+			{
+				return;
+			}
+
+			var taskbar = Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
+			var height = taskbar != null && taskbar.IsVisible ? taskbar.Height : 0;
+
+			Left = 0;
+			Top = 0;
+			Width = SystemParameters.PrimaryScreenWidth;
+			Height = Math.Max(MinHeight, SystemParameters.PrimaryScreenHeight - height);
 		}
 
 		private void UpdateTaskbarVisibility()
 		{
-			if (!isMainWindow)
+			if (isMainWindow)
 			{
-				return;
-			}
-
-			var taskbar = System.Windows.Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
-
-			if (taskbar == default)
-			{
-				return;
-			}
-
-			if (IsFullScreen)
-			{
-				taskbar.Show();
-			}
-			else
-			{
-				taskbar.Hide();
+				Application.Current.Windows.OfType<Taskbar>().FirstOrDefault()?.SetFullScreenVisibility(isFullScreen);
 			}
 		}
 
@@ -309,13 +335,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private void BrowserWindow_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.F11)
-			{
-				ToggleFullScreen();
-				e.Handled = true;
-				return;
-			}
-
 			if (e.Key == Key.Tab)
 			{
 				var hasShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
@@ -346,6 +365,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private void BrowserWindow_KeyUp(object sender, KeyEventArgs e)
 		{
+			if (isMainWindow && e.Key == Key.F11)
+			{
+				ToggleFullScreen();
+				e.Handled = true;
+				return;
+			}
+
 			if (e.Key == Key.F5)
 			{
 				ReloadRequested?.Invoke();
@@ -458,7 +484,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			if (e.PropertyName == nameof(SystemParameters.WorkArea))
 			{
-				Dispatcher.InvokeAsync(InitializeBounds);
+				Dispatcher.InvokeAsync(() => { if (isFullScreen) UpdateFullScreenBounds(); });
 			}
 		}
 
@@ -486,12 +512,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 				BrowserControlHost.Child = control;
 			}
 
+			isFullScreen = isMainWindow && WindowSettings.FullScreenMode;
 			RegisterEvents();
 			InitializeBounds();
 			ApplySettings();
 			LoadIcons();
 			LoadText();
-			Loaded += (o, args) => UpdateTaskbarVisibility();
+			Loaded += (o, args) => { UpdateTaskbarVisibility(); UpdateFullScreenBounds(); };
 		}
 
 		private void RegisterEvents()
@@ -510,7 +537,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 			FindMenuButton.Click += (o, args) => ShowFindbar();
 			FindTextBox.KeyUp += FindTextBox_KeyUp;
 			ForwardButton.Click += (o, args) => ForwardNavigationRequested?.Invoke();
-			FullScreenButton.Click += (o, args) => ToggleFullScreen();
 			HomeButton.Click += (o, args) => HomeNavigationRequested?.Invoke();
 			Loaded += BrowserWindow_Loaded;
 			MenuButton.Click += MenuButton_Click;
@@ -600,8 +626,8 @@ if (typeof __SEB_focusElement === 'undefined') {
 			{
 				Top = 0;
 				Left = 0;
-				Height = SystemParameters.WorkArea.Height;
-				Width = SystemParameters.WorkArea.Width;
+				Height = SystemParameters.PrimaryScreenHeight;
+				Width = SystemParameters.PrimaryScreenWidth;
 				ResizeMode = ResizeMode.NoResize;
 				WindowStyle = WindowStyle.None;
 			}

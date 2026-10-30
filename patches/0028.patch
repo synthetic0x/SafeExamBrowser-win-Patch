@@ -1,0 +1,588 @@
+From 7200f3655843c8770864b0d3d0c6012978953bae Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 22:47:14 -0400
+Subject: [PATCH] фуллскрин по f11, кнопки нахуй
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Handlers/KeyboardHandlerTests.cs          |  22 ++++
+ .../Handlers/KeyboardHandler.cs               |  11 ++
+ .../Window/KeyboardResponsibility.cs          |   5 +
+ .../DisplayMonitorOperationTests.cs           |  15 +++
+ .../Operations/DisplayMonitorOperation.cs     |   3 +-
+ .../MonitoringResponsibility.cs               |   4 +-
+ .../Browser/IBrowserWindow.cs                 |   5 +
+ .../Shell/ITaskbar.cs                         |   4 +
+ .../Windows/BrowserWindow.xaml                |  13 +--
+ .../Windows/BrowserWindow.xaml.cs             | 108 +++++++++++-------
+ .../Windows/Taskbar.xaml                      |  14 +--
+ .../Windows/Taskbar.xaml.cs                   |  44 ++++---
+ 12 files changed, 166 insertions(+), 82 deletions(-)
+
+diff --git a/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs b/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
+index 37cec955..f9e6de08 100644
+--- a/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
++++ b/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
+@@ -24,6 +24,28 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
+ 			sut = new KeyboardHandler();
+ 		}
+ 
++		[TestMethod]
++		public void MustToggleFullScreenOnceOnF11Release()
++		{
++			var shortcut = false;
++			var toggles = 0;
++			sut.FullScreenRequested += () => toggles++;
++
++			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
++			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
++			Assert.AreEqual(0, toggles);
++			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
++			Assert.AreEqual(1, toggles);
++		}
++
++		[TestMethod]
++		public void MustLeaveF11UnconsumedWithoutFullScreenSupport()
++		{
++			var shortcut = false;
++
++			Assert.IsFalse(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
++		}
++
+ 		[TestMethod]
+ 		public void MustDetectFindCommand()
+ 		{
+diff --git a/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs b/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
+index f3959816..b22e63f0 100644
+--- a/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
++++ b/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
+@@ -16,6 +16,7 @@ namespace SafeExamBrowser.Browser.Handlers
+ 	internal class KeyboardHandler : IKeyboardHandler
+ 	{
+ 		internal event ActionRequestedEventHandler FindRequested;
++		internal event ActionRequestedEventHandler FullScreenRequested;
+ 		internal event ActionRequestedEventHandler HomeNavigationRequested;
+ 		internal event ActionRequestedEventHandler ReloadRequested;
+ 		internal event ActionRequestedEventHandler ZoomInRequested;
+@@ -75,6 +76,16 @@ namespace SafeExamBrowser.Browser.Handlers
+ 
+ 		public bool OnPreKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int keyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
+ 		{
++			if (keyCode == (int) Keys.F11 && FullScreenRequested != null)
++			{
++				if (type == KeyType.KeyUp)
++				{
++					FullScreenRequested.Invoke();
++				}
++
++				return true;
++			}
++
+ 			if (type == KeyType.KeyUp && keyCode == (int) Keys.F5)
+ 			{
+ 				ReloadRequested?.Invoke();
+diff --git a/SafeExamBrowser.Browser/Responsibilities/Window/KeyboardResponsibility.cs b/SafeExamBrowser.Browser/Responsibilities/Window/KeyboardResponsibility.cs
+index 36248ee7..f3bda6f4 100644
+--- a/SafeExamBrowser.Browser/Responsibilities/Window/KeyboardResponsibility.cs
++++ b/SafeExamBrowser.Browser/Responsibilities/Window/KeyboardResponsibility.cs
+@@ -8,6 +8,7 @@
+ 
+ using SafeExamBrowser.Browser.Contracts.Events;
+ using SafeExamBrowser.Browser.Handlers;
++using SafeExamBrowser.UserInterface.Contracts.Browser;
+ 
+ namespace SafeExamBrowser.Browser.Responsibilities.Window
+ {
+@@ -33,6 +34,10 @@ namespace SafeExamBrowser.Browser.Responsibilities.Window
+ 		private void RegisterEvents()
+ 		{
+ 			keyboardHandler.FindRequested += KeyboardHandler_FindRequested;
++			if (Context.IsMainWindow && Window is IFullScreenBrowserWindow fullScreenWindow)
++			{
++				keyboardHandler.FullScreenRequested += fullScreenWindow.ToggleFullScreen;
++			}
+ 			keyboardHandler.FocusAddressBarRequested += KeyboardHandler_FocusAddressBarRequested;
+ 			keyboardHandler.HomeNavigationRequested += HomeNavigationRequested;
+ 			keyboardHandler.ReloadRequested += ReloadRequested;
+diff --git a/SafeExamBrowser.Client.UnitTests/Operations/DisplayMonitorOperationTests.cs b/SafeExamBrowser.Client.UnitTests/Operations/DisplayMonitorOperationTests.cs
+index 76c91961..36d3ad84 100644
+--- a/SafeExamBrowser.Client.UnitTests/Operations/DisplayMonitorOperationTests.cs
++++ b/SafeExamBrowser.Client.UnitTests/Operations/DisplayMonitorOperationTests.cs
+@@ -69,6 +69,21 @@ namespace SafeExamBrowser.Client.UnitTests.Operations
+ 			displayMonitor.Verify(d => d.InitializePrimaryDisplay(It.Is<int>(h => h == 0)), Times.Never);
+ 		}
+ 
++		[TestMethod]
++		public void Perform_MustNotReserveSpaceForFullScreenTaskbar()
++		{
++			context.Settings = new AppSettings();
++			context.Settings.UserInterface.Taskbar.EnableTaskbar = true;
++			taskbar = new Mock<ITaskbar>();
++			taskbar.As<IFullScreenTaskbar>();
++			sut = new DisplayMonitorOperation(context, displayMonitor.Object, logger.Object, taskbar.Object);
++
++			sut.Perform();
++
++			displayMonitor.Verify(d => d.InitializePrimaryDisplay(0), Times.Once);
++			taskbar.Verify(t => t.GetAbsoluteHeight(), Times.Never);
++		}
++
+ 		[TestMethod]
+ 		public void Perform_MustCorrectlyInitializeDisplayWithoutTaskbar()
+ 		{
+diff --git a/SafeExamBrowser.Client/Operations/DisplayMonitorOperation.cs b/SafeExamBrowser.Client/Operations/DisplayMonitorOperation.cs
+index f4f895e3..407acc3e 100644
+--- a/SafeExamBrowser.Client/Operations/DisplayMonitorOperation.cs
++++ b/SafeExamBrowser.Client/Operations/DisplayMonitorOperation.cs
+@@ -35,7 +35,8 @@ namespace SafeExamBrowser.Client.Operations
+ 			logger.Info("Initializing working area...");
+ 			StatusChanged?.Invoke(TextKey.OperationStatus_InitializeWorkingArea);
+ 
+-			displayMonitor.InitializePrimaryDisplay(Context.Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
++			var height = Context.Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0;
++			displayMonitor.InitializePrimaryDisplay(height);
+ 			displayMonitor.StartMonitoringDisplayChanges();
+ 
+ 			return OperationResult.Success;
+diff --git a/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs b/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
+index c49e4f3d..87a27cd1 100644
+--- a/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
++++ b/SafeExamBrowser.Client/Responsibilities/MonitoringResponsibility.cs
+@@ -110,7 +110,7 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 			Logger.Info("Explorer started, skipping termination [patched].");
+ 
+ 			Logger.Info("Re-initializing working area...");
+-			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
++			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0);
+ 
+ 			Logger.Info("Re-initializing shell...");
+ 			actionCenter.InitializeBounds();
+@@ -145,7 +145,7 @@ namespace SafeExamBrowser.Client.Responsibilities
+ 		private void DisplayMonitor_DisplaySettingsChanged()
+ 		{
+ 			Logger.Info("Re-initializing working area...");
+-			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
++			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0);
+ 
+ 			Logger.Info("Re-initializing shell...");
+ 			actionCenter.InitializeBounds();
+diff --git a/SafeExamBrowser.UserInterface.Contracts/Browser/IBrowserWindow.cs b/SafeExamBrowser.UserInterface.Contracts/Browser/IBrowserWindow.cs
+index e6732cea..6baddbc5 100644
+--- a/SafeExamBrowser.UserInterface.Contracts/Browser/IBrowserWindow.cs
++++ b/SafeExamBrowser.UserInterface.Contracts/Browser/IBrowserWindow.cs
+@@ -15,6 +15,11 @@ using SafeExamBrowser.UserInterface.Contracts.Windows;
+ 
+ namespace SafeExamBrowser.UserInterface.Contracts.Browser
+ {
++	public interface IFullScreenBrowserWindow
++	{
++		void ToggleFullScreen();
++	}
++
+ 	/// <summary>
+ 	/// Defines the functionality of a browser window, i.e. a window with an embedded browser instance (see <see cref="IBrowserControl"/>).
+ 	/// </summary>
+diff --git a/SafeExamBrowser.UserInterface.Contracts/Shell/ITaskbar.cs b/SafeExamBrowser.UserInterface.Contracts/Shell/ITaskbar.cs
+index 762b86ac..80b23400 100644
+--- a/SafeExamBrowser.UserInterface.Contracts/Shell/ITaskbar.cs
++++ b/SafeExamBrowser.UserInterface.Contracts/Shell/ITaskbar.cs
+@@ -12,6 +12,10 @@ using SafeExamBrowser.UserInterface.Contracts.Shell.Events;
+ 
+ namespace SafeExamBrowser.UserInterface.Contracts.Shell
+ {
++	public interface IFullScreenTaskbar
++	{
++	}
++
+ 	/// <summary>
+ 	/// The taskbar is a user interface element via which the user can access and control various aspects of the application.
+ 	/// </summary>
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
+index ab7b906b..a7a7753b 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml
+@@ -36,22 +36,13 @@
+                         <ColumnDefinition Width="*" />
+                         <ColumnDefinition Width="Auto" />
+                         <ColumnDefinition Width="Auto" />
+-                        <ColumnDefinition Width="Auto" />
+                     </Grid.ColumnDefinitions>
+                     <Button Grid.Column="0" x:Name="HomeButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="1" x:Name="BackwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="2" x:Name="ForwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Button Grid.Column="3" x:Name="ReloadButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <TextBox Grid.Column="4" x:Name="UrlTextBox" Height="25" HorizontalAlignment="Stretch" Margin="5,0" Padding="5,0" VerticalContentAlignment="Center" />
+-                    <Button Grid.Column="5" x:Name="FullScreenButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center">
+-                        <Viewbox Width="18" Height="18">
+-                            <Canvas Width="1024.000" Height="1024.000">
+-                                <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+-                                      Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
+-                            </Canvas>
+-                        </Viewbox>
+-                    </Button>
+-                    <Button Grid.Column="6" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
++                    <Button Grid.Column="5" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
+                         <fa:ImageAwesome Icon="Download" />
+                     </Button>
+                     <Popup x:Name="DownloadsPopup" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
+@@ -59,7 +50,7 @@
+                             <StackPanel x:Name="Downloads" Orientation="Vertical" />
+                         </Border>
+                     </Popup>
+-                    <Button Grid.Column="7" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
++                    <Button Grid.Column="6" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                     <Popup x:Name="MenuPopup" IsOpen="False" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
+                         <Border Background="{StaticResource BackgroundBrush}" BorderBrush="LightGray" BorderThickness="1,0,1,1" Width="250">
+                             <StackPanel Orientation="Vertical">
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index 4d71c7d4..2625bb68 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -32,7 +32,7 @@ using SafeExamBrowser.UserInterface.Shared.Utilities;
+ 
+ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ {
+-	internal partial class BrowserWindow : Window, IBrowserWindow
++	internal partial class BrowserWindow : Window, IBrowserWindow, IFullScreenBrowserWindow
+ 	{
+ 		private const string CLEAR_FIND_TERM = "thisisahacktoclearthesearchresultsasitappearsthatthereisnosuchfunctionalityincef";
+ 
+@@ -45,6 +45,12 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		private WindowClosedEventHandler closed;
+ 		private WindowClosingEventHandler closing;
+ 		private bool browserControlGetsFocusFromTaskbar;
++		private bool isFullScreen;
++		private bool hasSavedWindowState;
++		private Rect savedBounds;
++		private WindowState savedWindowState;
++		private WindowStyle savedWindowStyle;
++		private ResizeMode savedResizeMode;
+ 		private IInputElement tabKeyDownFocusElement;
+ 
+ 		private WindowSettings WindowSettings
+@@ -55,7 +61,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
+ 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
+ 		public IntPtr Handle { get; private set; }
+-		internal bool IsFullScreen => WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
++		internal bool IsFullScreen => isFullScreen;
+ 		internal bool IsMainWindow => isMainWindow;
+ 
+ 		public event AddressChangedEventHandler AddressChanged;
+@@ -96,56 +102,76 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		public void ToggleFullScreen()
+ 		{
+-			Dispatcher.Invoke(() =>
++			Dispatcher.BeginInvoke((Action) (() =>
+ 			{
+-				var fullScreen = WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
++				if (!isMainWindow)
++				{
++					return;
++				}
+ 
+-				if (fullScreen)
++				if (isFullScreen)
+ 				{
+-					WindowStyle = WindowStyle.SingleBorderWindow;
+-					ResizeMode = ResizeMode.CanResize;
++					isFullScreen = false;
++					UpdateTaskbarVisibility();
+ 					WindowState = WindowState.Normal;
+-					WindowState = WindowState.Maximized;
++
++					if (hasSavedWindowState)
++					{
++						WindowStyle = savedWindowStyle;
++						ResizeMode = savedResizeMode;
++						Left = savedBounds.Left;
++						Top = savedBounds.Top;
++						Width = savedBounds.Width;
++						Height = savedBounds.Height;
++						WindowState = savedWindowState;
++					}
++					else
++					{
++						WindowStyle = WindowStyle.SingleBorderWindow;
++						ResizeMode = ResizeMode.CanResize;
++						WindowState = WindowState.Maximized;
++					}
+ 				}
+ 				else
+ 				{
+-					var area = SystemParameters.WorkArea;
+-
++					savedBounds = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
++					savedWindowState = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
++					savedWindowStyle = WindowStyle;
++					savedResizeMode = ResizeMode;
++					hasSavedWindowState = true;
++					isFullScreen = true;
+ 					WindowState = WindowState.Normal;
+ 					WindowStyle = WindowStyle.None;
+ 					ResizeMode = ResizeMode.NoResize;
+-					Left = area.Left;
+-					Top = area.Top;
+-					Width = area.Width;
+-					Height = area.Height;
++					UpdateTaskbarVisibility();
++					UpdateFullScreenBounds();
+ 				}
+ 
+-				UpdateTaskbarVisibility();
+ 				Activate();
+-			});
++			}));
+ 		}
+ 
+-		private void UpdateTaskbarVisibility()
++		internal void UpdateFullScreenBounds()
+ 		{
+-			if (!isMainWindow)
++			if (!isMainWindow || !isFullScreen)
+ 			{
+ 				return;
+ 			}
+ 
+-			var taskbar = System.Windows.Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
++			var taskbar = Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
++			var height = taskbar != null && taskbar.IsVisible ? taskbar.Height : 0;
+ 
+-			if (taskbar == default)
+-			{
+-				return;
+-			}
++			Left = 0;
++			Top = 0;
++			Width = SystemParameters.PrimaryScreenWidth;
++			Height = Math.Max(MinHeight, SystemParameters.PrimaryScreenHeight - height);
++		}
+ 
+-			if (IsFullScreen)
+-			{
+-				taskbar.Show();
+-			}
+-			else
++		private void UpdateTaskbarVisibility()
++		{
++			if (isMainWindow)
+ 			{
+-				taskbar.Hide();
++				Application.Current.Windows.OfType<Taskbar>().FirstOrDefault()?.SetFullScreenVisibility(isFullScreen);
+ 			}
+ 		}
+ 
+@@ -309,13 +335,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private void BrowserWindow_KeyDown(object sender, KeyEventArgs e)
+ 		{
+-			if (e.Key == Key.F11)
+-			{
+-				ToggleFullScreen();
+-				e.Handled = true;
+-				return;
+-			}
+-
+ 			if (e.Key == Key.Tab)
+ 			{
+ 				var hasShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+@@ -346,6 +365,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private void BrowserWindow_KeyUp(object sender, KeyEventArgs e)
+ 		{
++			if (isMainWindow && e.Key == Key.F11)
++			{
++				ToggleFullScreen();
++				e.Handled = true;
++				return;
++			}
++
+ 			if (e.Key == Key.F5)
+ 			{
+ 				ReloadRequested?.Invoke();
+@@ -458,7 +484,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			if (e.PropertyName == nameof(SystemParameters.WorkArea))
+ 			{
+-				Dispatcher.InvokeAsync(InitializeBounds);
++				Dispatcher.InvokeAsync(() => { if (isFullScreen) UpdateFullScreenBounds(); });
+ 			}
+ 		}
+ 
+@@ -486,12 +512,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 				BrowserControlHost.Child = control;
+ 			}
+ 
++			isFullScreen = isMainWindow && WindowSettings.FullScreenMode;
+ 			RegisterEvents();
+ 			InitializeBounds();
+ 			ApplySettings();
+ 			LoadIcons();
+ 			LoadText();
+-			Loaded += (o, args) => UpdateTaskbarVisibility();
++			Loaded += (o, args) => { UpdateTaskbarVisibility(); UpdateFullScreenBounds(); };
+ 		}
+ 
+ 		private void RegisterEvents()
+@@ -510,7 +537,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			FindMenuButton.Click += (o, args) => ShowFindbar();
+ 			FindTextBox.KeyUp += FindTextBox_KeyUp;
+ 			ForwardButton.Click += (o, args) => ForwardNavigationRequested?.Invoke();
+-			FullScreenButton.Click += (o, args) => ToggleFullScreen();
+ 			HomeButton.Click += (o, args) => HomeNavigationRequested?.Invoke();
+ 			Loaded += BrowserWindow_Loaded;
+ 			MenuButton.Click += MenuButton_Click;
+@@ -600,8 +626,8 @@ if (typeof __SEB_focusElement === 'undefined') {
+ 			{
+ 				Top = 0;
+ 				Left = 0;
+-				Height = SystemParameters.WorkArea.Height;
+-				Width = SystemParameters.WorkArea.Width;
++				Height = SystemParameters.PrimaryScreenHeight;
++				Width = SystemParameters.PrimaryScreenWidth;
+ 				ResizeMode = ResizeMode.NoResize;
+ 				WindowStyle = WindowStyle.None;
+ 			}
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
+index 21153f44..2089f0d7 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml
+@@ -11,7 +11,6 @@
+     <Window.Resources>
+         <ResourceDictionary>
+             <ResourceDictionary.MergedDictionaries>
+-                <ResourceDictionary Source="../Templates/Buttons.xaml" />
+                 <ResourceDictionary Source="../Templates/Colors.xaml" />
+                 <ResourceDictionary Source="../Templates/ScrollViewers.xaml" />
+             </ResourceDictionary.MergedDictionaries>
+@@ -24,7 +23,6 @@
+             <ColumnDefinition Width="Auto" />
+             <ColumnDefinition Width="Auto" />
+             <ColumnDefinition Width="Auto" />
+-            <ColumnDefinition Width="Auto" />
+         </Grid.ColumnDefinitions>
+         <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Template="{StaticResource SmallBarScrollViewer}">
+             <StackPanel x:Name="ApplicationStackPanel" Orientation="Horizontal" />
+@@ -32,16 +30,6 @@
+         <StackPanel Grid.Column="1" x:Name="NotificationStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
+         <StackPanel Grid.Column="2" x:Name="SystemControlStackPanel" Orientation="Horizontal" VerticalAlignment="Stretch" />
+         <local:Clock Grid.Column="3" x:Name="Clock" Foreground="{StaticResource SecondaryTextBrush}" Padding="10,0,10,0" />
+-        <Button Grid.Column="4" x:Name="FullScreenButton"
+-                Background="{StaticResource BackgroundBrush}" HorizontalAlignment="Stretch" ToolTip="Full screen"
+-                Template="{StaticResource TaskbarButton}" VerticalAlignment="Stretch">
+-            <Viewbox Width="20" Height="20">
+-                <Canvas Width="1024.000" Height="1024.000">
+-                    <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+-                          Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
+-                </Canvas>
+-            </Viewbox>
+-        </Button>
+-        <local:QuitButton Grid.Column="5" x:Name="QuitButton" />
++        <local:QuitButton Grid.Column="4" x:Name="QuitButton" />
+     </Grid>
+ </Window>
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index 99bc814c..ede5a8f6 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -19,11 +19,12 @@ using SafeExamBrowser.UserInterface.Shared.Utilities;
+ 
+ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ {
+-	internal partial class Taskbar : Window, ITaskbar
++	internal partial class Taskbar : Window, ITaskbar, IFullScreenTaskbar
+ 	{
+ 		private readonly ILogger logger;
+ 
+ 		private bool allowClose;
++		private bool shellEnabled;
+ 		private bool isQuitButtonFocusedAtKeyDown;
+ 		private bool isFirstChildFocusedAtKeyDown;
+ 
+@@ -88,6 +89,11 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Dispatcher.BeginInvoke((Action) (() =>
+ 			{
++				if (!IsVisible)
++				{
++					return;
++				}
++
+ 				Activate();
+ 
+ 				if (forward && ApplicationStackPanel.Children.Count > 0)
+@@ -137,6 +143,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 				var size = this.TransformToPhysical(Width, Height);
+ 
+ 				logger.Debug($"Set taskbar bounds to {Width}x{Height} at ({Left}/{Top}), in physical pixels: {size.X}x{size.Y} at ({position.X}/{position.Y}).");
++				Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow)?.UpdateFullScreenBounds();
+ 			});
+ 		}
+ 
+@@ -144,7 +151,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Closing += Taskbar_Closing;
+ 			Loaded += (o, args) => InitializeBounds();
+-			FullScreenButton.Click += FullScreenButton_Click;
+ 			QuitButton.Clicked += QuitButton_Clicked;
+ 		}
+ 
+@@ -167,26 +173,29 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		{
+ 			Dispatcher.Invoke(() =>
+ 			{
++				shellEnabled = true;
+ 				var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
+-
+-				if (main == default || main.IsFullScreen)
+-				{
+-					base.Show();
+-				}
++				SetFullScreenVisibility(main == null || main.IsFullScreen);
++				main?.UpdateFullScreenBounds();
+ 			});
+ 		}
+ 
+-		private void Activator_Activated()
++		internal void SetFullScreenVisibility(bool fullScreen)
+ 		{
+-			(this as ITaskbar).Focus(true);
++			if (shellEnabled && fullScreen)
++			{
++				InitializeBounds();
++				base.Show();
++			}
++			else
++			{
++				base.Hide();
++			}
+ 		}
+ 
+-		private void FullScreenButton_Click(object sender, RoutedEventArgs e)
++		private void Activator_Activated()
+ 		{
+-			var windows = Application.Current.Windows.OfType<BrowserWindow>().ToList();
+-			var window = windows.FirstOrDefault(w => w.IsMainWindow) ?? windows.FirstOrDefault();
+-
+-			window?.ToggleFullScreen();
++			(this as ITaskbar).Focus(true);
+ 		}
+ 
+ 		private void QuitButton_Clicked(CancelEventArgs args)
+@@ -221,6 +230,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private void Window_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+ 		{
++			if (e.Key == System.Windows.Input.Key.F11)
++			{
++				Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow)?.ToggleFullScreen();
++				e.Handled = true;
++				return;
++			}
++
+ 			if (e.Key == System.Windows.Input.Key.Tab)
+ 			{
+ 				var shift = System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift);

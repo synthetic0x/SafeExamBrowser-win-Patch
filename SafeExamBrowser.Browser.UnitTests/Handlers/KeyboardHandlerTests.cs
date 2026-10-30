@@ -25,6 +25,28 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
 		}
 
 		[TestMethod]
+		public void MustToggleFullScreenOnceOnF11Release()
+		{
+			var shortcut = false;
+			var toggles = 0;
+			sut.FullScreenRequested += () => toggles++;
+
+			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+			Assert.AreEqual(0, toggles);
+			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+			Assert.AreEqual(1, toggles);
+		}
+
+		[TestMethod]
+		public void MustLeaveF11UnconsumedWithoutFullScreenSupport()
+		{
+			var shortcut = false;
+
+			Assert.IsFalse(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+		}
+
+		[TestMethod]
 		public void MustDetectFindCommand()
 		{
 			var findRequested = false;

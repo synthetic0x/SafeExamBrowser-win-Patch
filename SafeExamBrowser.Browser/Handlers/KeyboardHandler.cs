@@ -16,6 +16,7 @@ namespace SafeExamBrowser.Browser.Handlers
 	internal class KeyboardHandler : IKeyboardHandler
 	{
 		internal event ActionRequestedEventHandler FindRequested;
+		internal event ActionRequestedEventHandler FullScreenRequested;
 		internal event ActionRequestedEventHandler HomeNavigationRequested;
 		internal event ActionRequestedEventHandler ReloadRequested;
 		internal event ActionRequestedEventHandler ZoomInRequested;
@@ -75,6 +76,16 @@ namespace SafeExamBrowser.Browser.Handlers
 
 		public bool OnPreKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int keyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
 		{
+			if (keyCode == (int) Keys.F11 && FullScreenRequested != null)
+			{
+				if (type == KeyType.KeyUp)
+				{
+					FullScreenRequested.Invoke();
+				}
+
+				return true;
+			}
+
 			if (type == KeyType.KeyUp && keyCode == (int) Keys.F5)
 			{
 				ReloadRequested?.Invoke();

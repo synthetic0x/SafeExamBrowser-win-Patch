@@ -15,6 +15,11 @@ using SafeExamBrowser.UserInterface.Contracts.Windows;
 
 namespace SafeExamBrowser.UserInterface.Contracts.Browser
 {
+	public interface IFullScreenBrowserWindow
+	{
+		void ToggleFullScreen();
+	}
+
 	/// <summary>
 	/// Defines the functionality of a browser window, i.e. a window with an embedded browser instance (see <see cref="IBrowserControl"/>).
 	/// </summary>

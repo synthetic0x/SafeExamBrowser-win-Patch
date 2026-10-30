@@ -12,6 +12,10 @@ using SafeExamBrowser.UserInterface.Contracts.Shell.Events;
 
 namespace SafeExamBrowser.UserInterface.Contracts.Shell
 {
+	public interface IFullScreenTaskbar
+	{
+	}
+
 	/// <summary>
 	/// The taskbar is a user interface element via which the user can access and control various aspects of the application.
 	/// </summary>

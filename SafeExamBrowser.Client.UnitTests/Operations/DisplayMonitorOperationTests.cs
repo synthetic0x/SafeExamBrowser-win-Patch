@@ -70,6 +70,21 @@ namespace SafeExamBrowser.Client.UnitTests.Operations
 		}
 
 		[TestMethod]
+		public void Perform_MustNotReserveSpaceForFullScreenTaskbar()
+		{
+			context.Settings = new AppSettings();
+			context.Settings.UserInterface.Taskbar.EnableTaskbar = true;
+			taskbar = new Mock<ITaskbar>();
+			taskbar.As<IFullScreenTaskbar>();
+			sut = new DisplayMonitorOperation(context, displayMonitor.Object, logger.Object, taskbar.Object);
+
+			sut.Perform();
+
+			displayMonitor.Verify(d => d.InitializePrimaryDisplay(0), Times.Once);
+			taskbar.Verify(t => t.GetAbsoluteHeight(), Times.Never);
+		}
+
+		[TestMethod]
 		public void Perform_MustCorrectlyInitializeDisplayWithoutTaskbar()
 		{
 			var height = 25;

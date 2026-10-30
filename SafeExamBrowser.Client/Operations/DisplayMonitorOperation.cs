@@ -35,7 +35,8 @@ namespace SafeExamBrowser.Client.Operations
 			logger.Info("Initializing working area...");
 			StatusChanged?.Invoke(TextKey.OperationStatus_InitializeWorkingArea);
 
-			displayMonitor.InitializePrimaryDisplay(Context.Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
+			var height = Context.Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0;
+			displayMonitor.InitializePrimaryDisplay(height);
 			displayMonitor.StartMonitoringDisplayChanges();
 
 			return OperationResult.Success;

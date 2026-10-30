@@ -110,7 +110,7 @@ namespace SafeExamBrowser.Client.Responsibilities
 			Logger.Info("Explorer started, skipping termination [patched].");
 
 			Logger.Info("Re-initializing working area...");
-			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
+			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0);
 
 			Logger.Info("Re-initializing shell...");
 			actionCenter.InitializeBounds();
@@ -145,7 +145,7 @@ namespace SafeExamBrowser.Client.Responsibilities
 		private void DisplayMonitor_DisplaySettingsChanged()
 		{
 			Logger.Info("Re-initializing working area...");
-			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar ? taskbar.GetAbsoluteHeight() : 0);
+			displayMonitor.InitializePrimaryDisplay(Settings.UserInterface.Taskbar.EnableTaskbar && !(taskbar is IFullScreenTaskbar) ? taskbar.GetAbsoluteHeight() : 0);
 
 			Logger.Info("Re-initializing shell...");
 			actionCenter.InitializeBounds();

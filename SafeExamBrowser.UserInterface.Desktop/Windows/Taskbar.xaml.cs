@@ -19,11 +19,12 @@ using SafeExamBrowser.UserInterface.Shared.Utilities;
 
 namespace SafeExamBrowser.UserInterface.Desktop.Windows
 {
-	internal partial class Taskbar : Window, ITaskbar
+	internal partial class Taskbar : Window, ITaskbar, IFullScreenTaskbar
 	{
 		private readonly ILogger logger;
 
 		private bool allowClose;
+		private bool shellEnabled;
 		private bool isQuitButtonFocusedAtKeyDown;
 		private bool isFirstChildFocusedAtKeyDown;
 
@@ -88,6 +89,11 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			Dispatcher.BeginInvoke((Action) (() =>
 			{
+				if (!IsVisible)
+				{
+					return;
+				}
+
 				Activate();
 
 				if (forward && ApplicationStackPanel.Children.Count > 0)
@@ -137,6 +143,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 				var size = this.TransformToPhysical(Width, Height);
 
 				logger.Debug($"Set taskbar bounds to {Width}x{Height} at ({Left}/{Top}), in physical pixels: {size.X}x{size.Y} at ({position.X}/{position.Y}).");
+				Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow)?.UpdateFullScreenBounds();
 			});
 		}
 
@@ -144,7 +151,6 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			Closing += Taskbar_Closing;
 			Loaded += (o, args) => InitializeBounds();
-			FullScreenButton.Click += FullScreenButton_Click;
 			QuitButton.Clicked += QuitButton_Clicked;
 		}
 
@@ -167,26 +173,29 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			Dispatcher.Invoke(() =>
 			{
+				shellEnabled = true;
 				var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
-
-				if (main == default || main.IsFullScreen)
-				{
-					base.Show();
-				}
+				SetFullScreenVisibility(main == null || main.IsFullScreen);
+				main?.UpdateFullScreenBounds();
 			});
+		}
+
+		internal void SetFullScreenVisibility(bool fullScreen)
+		{
+			if (shellEnabled && fullScreen)
+			{
+				InitializeBounds();
+				base.Show();
+			}
+			else
+			{
+				base.Hide();
+			}
 		}
 
 		private void Activator_Activated()
 		{
 			(this as ITaskbar).Focus(true);
-		}
-
-		private void FullScreenButton_Click(object sender, RoutedEventArgs e)
-		{
-			var windows = Application.Current.Windows.OfType<BrowserWindow>().ToList();
-			var window = windows.FirstOrDefault(w => w.IsMainWindow) ?? windows.FirstOrDefault();
-
-			window?.ToggleFullScreen();
 		}
 
 		private void QuitButton_Clicked(CancelEventArgs args)
@@ -221,6 +230,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private void Window_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
 		{
+			if (e.Key == System.Windows.Input.Key.F11)
+			{
+				Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow)?.ToggleFullScreen();
+				e.Handled = true;
+				return;
+			}
+
 			if (e.Key == System.Windows.Input.Key.Tab)
 			{
 				var shift = System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift);
