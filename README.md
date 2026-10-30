@@ -1,4 +1,12 @@
-Unofficial fork of SafeExamBrowser, MPL 2.0. ONLY FOR RESEARCH USE. author is not responsible for misuse
+Unofficial fork of SafeExamBrowser. ONLY FOR RESEARCH USE. author is not responsible for misuse
+
+This is an unofficial fork of SafeExamBrowser
+This repository is not affiliated to the SEB project or ETH Zurich in any way
+This fork changes SEB security and limitation
+It should be used only for security testing in environments where you have authorization
+Source code is under MPL 2.0 license
+Upstream: https://github.com/SafeExamBrowser/seb-win-refactoring
+Sources for releases: https://github.com/synthetic0x/SafeExamBrowser-win-Patch/tree/v1.0.0
 
 # Safe Exam Browser, Version 3.x
 
@@ -14,10 +22,9 @@ Safe Exam Browser for Windows requires the prerequisites listed below in order t
 * .NET Framework 4.8 Runtime: https://dotnet.microsoft.com/download/dotnet-framework/net48
 * Visual C++ 2015-2022 Redistributable: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 
-## Project Status
+## Original SEB project status
 
-> [!WARNING]
-> **The builds linked below are for testing purposes only.** They may be unstable and should thus _never_ be used in a production environment! Always use the latest, official release version of SEB.
+Links and badges below are for the original SEB project, not this fork
 
 | Aspect            | Status                                                                                                                | Details                                                         |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
