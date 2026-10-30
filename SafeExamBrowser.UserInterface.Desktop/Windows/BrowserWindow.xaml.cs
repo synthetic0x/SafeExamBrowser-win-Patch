@@ -108,13 +108,15 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 				}
 				else
 				{
+					var area = SystemParameters.WorkArea;
+
 					WindowState = WindowState.Normal;
 					WindowStyle = WindowStyle.None;
 					ResizeMode = ResizeMode.NoResize;
-					Left = 0;
-					Top = 0;
-					Width = SystemParameters.PrimaryScreenWidth;
-					Height = SystemParameters.PrimaryScreenHeight;
+					Left = area.Left;
+					Top = area.Top;
+					Width = area.Width;
+					Height = area.Height;
 				}
 
 				Activate();
