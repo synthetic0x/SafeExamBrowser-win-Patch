@@ -103,6 +103,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 				{
 					WindowStyle = WindowStyle.SingleBorderWindow;
 					ResizeMode = ResizeMode.CanResize;
+					WindowState = WindowState.Normal;
 					WindowState = WindowState.Maximized;
 				}
 				else

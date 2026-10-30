@@ -129,9 +129,11 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		{
 			Dispatcher.Invoke(() =>
 			{
-				Width = SystemParameters.PrimaryScreenWidth;
-				Left = 0;
-				Top = SystemParameters.PrimaryScreenHeight - Height;
+				var area = SystemParameters.WorkArea;
+
+				Width = area.Width;
+				Left = area.Left;
+				Top = area.Bottom - Height;
 
 				var position = this.TransformToPhysical(Left, Top);
 				var size = this.TransformToPhysical(Width, Height);
