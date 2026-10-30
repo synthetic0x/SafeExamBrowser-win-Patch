@@ -165,7 +165,15 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		public new void Show()
 		{
-			Dispatcher.Invoke(base.Show);
+			Dispatcher.Invoke(() =>
+			{
+				var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
+
+				if (main == default || main.IsFullScreen)
+				{
+					base.Show();
+				}
+			});
 		}
 
 		private void Activator_Activated()

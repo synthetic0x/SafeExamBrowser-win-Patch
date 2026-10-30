@@ -55,6 +55,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		public bool CanNavigateBackwards { set => Dispatcher.Invoke(() => BackwardButton.IsEnabled = value); }
 		public bool CanNavigateForwards { set => Dispatcher.Invoke(() => ForwardButton.IsEnabled = value); }
 		public IntPtr Handle { get; private set; }
+		internal bool IsFullScreen => WindowStyle == WindowStyle.None && ResizeMode == ResizeMode.NoResize;
 		internal bool IsMainWindow => isMainWindow;
 
 		public event AddressChangedEventHandler AddressChanged;
@@ -119,8 +120,33 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 					Height = area.Height;
 				}
 
+				UpdateTaskbarVisibility();
 				Activate();
 			});
+		}
+
+		private void UpdateTaskbarVisibility()
+		{
+			if (!isMainWindow)
+			{
+				return;
+			}
+
+			var taskbar = System.Windows.Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
+
+			if (taskbar == default)
+			{
+				return;
+			}
+
+			if (IsFullScreen)
+			{
+				taskbar.Show();
+			}
+			else
+			{
+				taskbar.Hide();
+			}
 		}
 
 		public void BringToForeground()
@@ -283,6 +309,13 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private void BrowserWindow_KeyDown(object sender, KeyEventArgs e)
 		{
+			if (e.Key == Key.F11)
+			{
+				ToggleFullScreen();
+				e.Handled = true;
+				return;
+			}
+
 			if (e.Key == Key.Tab)
 			{
 				var hasShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
@@ -458,6 +491,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 			ApplySettings();
 			LoadIcons();
 			LoadText();
+			Loaded += (o, args) => UpdateTaskbarVisibility();
 		}
 
 		private void RegisterEvents()
@@ -476,6 +510,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 			FindMenuButton.Click += (o, args) => ShowFindbar();
 			FindTextBox.KeyUp += FindTextBox_KeyUp;
 			ForwardButton.Click += (o, args) => ForwardNavigationRequested?.Invoke();
+			FullScreenButton.Click += (o, args) => ToggleFullScreen();
 			HomeButton.Click += (o, args) => HomeNavigationRequested?.Invoke();
 			Loaded += BrowserWindow_Loaded;
 			MenuButton.Click += MenuButton_Click;

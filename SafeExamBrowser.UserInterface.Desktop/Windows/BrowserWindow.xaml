@@ -36,13 +36,22 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" x:Name="HomeButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
                     <Button Grid.Column="1" x:Name="BackwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
                     <Button Grid.Column="2" x:Name="ForwardButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
                     <Button Grid.Column="3" x:Name="ReloadButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
                     <TextBox Grid.Column="4" x:Name="UrlTextBox" Height="25" HorizontalAlignment="Stretch" Margin="5,0" Padding="5,0" VerticalContentAlignment="Center" />
-                    <Button Grid.Column="5" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Button Grid.Column="5" x:Name="FullScreenButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center">
+                        <Viewbox Width="18" Height="18">
+                            <Canvas Width="1024.000" Height="1024.000">
+                                <Path Stroke="#ff000000" StrokeThickness="70" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M 100,380 L 100,100 L 380,100 M 644,100 L 924,100 L 924,380 M 924,644 L 924,924 L 644,924 M 380,924 L 100,924 L 100,644" />
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Button Grid.Column="6" x:Name="DownloadsButton" Height="30" HorizontalAlignment="Center" Margin="5" Padding="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" Visibility="Collapsed">
                         <fa:ImageAwesome Icon="Download" />
                     </Button>
                     <Popup x:Name="DownloadsPopup" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
@@ -50,7 +59,7 @@
                             <StackPanel x:Name="Downloads" Orientation="Vertical" />
                         </Border>
                     </Popup>
-                    <Button Grid.Column="6" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
+                    <Button Grid.Column="7" x:Name="MenuButton" Height="30" HorizontalAlignment="Center" Margin="5" Template="{StaticResource BrowserButton}" VerticalAlignment="Center" />
                     <Popup x:Name="MenuPopup" IsOpen="False" AllowsTransparency="True" PopupAnimation="Slide" Placement="Custom" PlacementTarget="{Binding ElementName=BrowserControlHost}">
                         <Border Background="{StaticResource BackgroundBrush}" BorderBrush="LightGray" BorderThickness="1,0,1,1" Width="250">
                             <StackPanel Orientation="Vertical">
