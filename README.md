@@ -1,3 +1,5 @@
+Unofficial fork of SafeExamBrowser, MPL 2.0. ONLY FOR RESEARCH USE. author is not responsible for misuse
+
 # Safe Exam Browser, Version 3.x
 
 Refactored version of Safe Exam Browser for Windows with Chromium as integrated browser engine.
