@@ -1,0 +1,244 @@
+From 61419ca6bad0087cc3f534cd1dc923abd5e8d670 Mon Sep 17 00:00:00 2001
+From: synthetic0x <260265463+synthetic0x@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 23:00:24 -0400
+Subject: [PATCH] f11 через хук, панель над таскбаром
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../Handlers/KeyboardHandlerTests.cs          |  6 +-
+ .../Handlers/KeyboardHandler.cs               | 13 +++-
+ .../Windows/BrowserWindow.xaml.cs             | 72 +++++++++++++++++++
+ .../Windows/Taskbar.xaml.cs                   | 27 +++++++
+ 4 files changed, 114 insertions(+), 4 deletions(-)
+
+diff --git a/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs b/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
+index f9e6de08..4fe66b7b 100644
+--- a/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
++++ b/SafeExamBrowser.Browser.UnitTests/Handlers/KeyboardHandlerTests.cs
+@@ -25,7 +25,7 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
+ 		}
+ 
+ 		[TestMethod]
+-		public void MustToggleFullScreenOnceOnF11Release()
++		public void MustToggleFullScreenOncePerF11Press()
+ 		{
+ 			var shortcut = false;
+ 			var toggles = 0;
+@@ -33,9 +33,11 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
+ 
+ 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+ 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+-			Assert.AreEqual(0, toggles);
++			Assert.AreEqual(1, toggles);
+ 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+ 			Assert.AreEqual(1, toggles);
++			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
++			Assert.AreEqual(2, toggles);
+ 		}
+ 
+ 		[TestMethod]
+diff --git a/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs b/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
+index b22e63f0..f6b0ca19 100644
+--- a/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
++++ b/SafeExamBrowser.Browser/Handlers/KeyboardHandler.cs
+@@ -26,6 +26,7 @@ namespace SafeExamBrowser.Browser.Handlers
+ 		internal event TabPressedEventHandler TabPressed;
+ 
+ 		private int? currentKeyDown = null;
++		private bool fullScreenKeyDown;
+ 
+ 		public bool OnKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int keyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey)
+ 		{
+@@ -78,9 +79,17 @@ namespace SafeExamBrowser.Browser.Handlers
+ 		{
+ 			if (keyCode == (int) Keys.F11 && FullScreenRequested != null)
+ 			{
+-				if (type == KeyType.KeyUp)
++				if (type == KeyType.RawKeyDown || type == KeyType.KeyDown)
+ 				{
+-					FullScreenRequested.Invoke();
++					if (!fullScreenKeyDown)
++					{
++						fullScreenKeyDown = true;
++						FullScreenRequested.Invoke();
++					}
++				}
++				else if (type == KeyType.KeyUp)
++				{
++					fullScreenKeyDown = false;
+ 				}
+ 
+ 				return true;
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+index 2625bb68..851e793b 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/BrowserWindow.xaml.cs
+@@ -9,6 +9,7 @@
+ using System;
+ using System.ComponentModel;
+ using System.Linq;
++using System.Runtime.InteropServices;
+ using System.Threading.Tasks;
+ using System.Windows;
+ using System.Windows.Controls;
+@@ -51,6 +52,9 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		private WindowState savedWindowState;
+ 		private WindowStyle savedWindowStyle;
+ 		private ResizeMode savedResizeMode;
++		private IntPtr keyboardHook;
++		private KeyboardHookDelegate keyboardHookDelegate;
++		private bool f11Pressed;
+ 		private IInputElement tabKeyDownFocusElement;
+ 
+ 		private WindowSettings WindowSettings
+@@ -151,6 +155,72 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			}));
+ 		}
+ 
++		private delegate IntPtr KeyboardHookDelegate(int code, IntPtr message, IntPtr data);
++
++		[DllImport("user32.dll", SetLastError = true)]
++		private static extern IntPtr SetWindowsHookEx(int id, KeyboardHookDelegate callback, IntPtr module, uint threadId);
++
++		[DllImport("user32.dll")]
++		private static extern bool UnhookWindowsHookEx(IntPtr hook);
++
++		[DllImport("user32.dll")]
++		private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr message, IntPtr data);
++
++		[DllImport("user32.dll")]
++		private static extern IntPtr GetForegroundWindow();
++
++		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
++		private static extern IntPtr GetModuleHandle(string name);
++
++		private void InstallKeyboardHook()
++		{
++			if (isMainWindow)
++			{
++				keyboardHookDelegate = HandleKeyboardHook;
++				keyboardHook = SetWindowsHookEx(13, keyboardHookDelegate, GetModuleHandle(null), 0);
++
++				if (keyboardHook == IntPtr.Zero)
++				{
++					logger.Error($"Failed to install F11 keyboard hook: {Marshal.GetLastWin32Error()}.");
++				}
++			}
++		}
++
++		private IntPtr HandleKeyboardHook(int code, IntPtr message, IntPtr data)
++		{
++			if (code >= 0 && Marshal.ReadInt32(data) == 0x7A)
++			{
++				var foreground = GetForegroundWindow();
++				var taskbar = Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
++				var taskbarHandle = taskbar == null ? IntPtr.Zero : new WindowInteropHelper(taskbar).Handle;
++				var isActive = foreground != IntPtr.Zero && (foreground == Handle || foreground == taskbarHandle);
++				var keyMessage = message.ToInt32();
++
++				if (keyMessage == 0x101 || keyMessage == 0x105)
++				{
++					var handled = f11Pressed;
++					f11Pressed = false;
++
++					if (handled)
++					{
++						return (IntPtr) 1;
++					}
++				}
++				else if (isActive && (keyMessage == 0x100 || keyMessage == 0x104))
++				{
++					if (!f11Pressed)
++					{
++						f11Pressed = true;
++						ToggleFullScreen();
++					}
++
++					return (IntPtr) 1;
++				}
++			}
++
++			return CallNextHookEx(keyboardHook, code, message, data);
++		}
++
+ 		internal void UpdateFullScreenBounds()
+ 		{
+ 			if (!isMainWindow || !isFullScreen)
+@@ -523,6 +593,8 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private void RegisterEvents()
+ 		{
++			SourceInitialized += (o, args) => InstallKeyboardHook();
++			Closed += (o, args) => { if (keyboardHook != IntPtr.Zero) UnhookWindowsHookEx(keyboardHook); };
+ 			BackwardButton.Click += (o, args) => BackwardNavigationRequested?.Invoke();
+ 			Closed += (o, args) => closed?.Invoke();
+ 			Closing += BrowserWindow_Closing;
+diff --git a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+index ede5a8f6..595ed9fc 100644
+--- a/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
++++ b/SafeExamBrowser.UserInterface.Desktop/Windows/Taskbar.xaml.cs
+@@ -9,7 +9,10 @@
+ using System;
+ using System.ComponentModel;
+ using System.Linq;
++using System.Runtime.InteropServices;
+ using System.Windows;
++using System.Windows.Interop;
++using System.Windows.Threading;
+ using SafeExamBrowser.Browser.Contracts.Events;
+ using SafeExamBrowser.I18n.Contracts;
+ using SafeExamBrowser.Logging.Contracts;
+@@ -25,6 +28,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 
+ 		private bool allowClose;
+ 		private bool shellEnabled;
++		private readonly DispatcherTimer foregroundTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+ 		private bool isQuitButtonFocusedAtKeyDown;
+ 		private bool isFirstChildFocusedAtKeyDown;
+ 
+@@ -150,6 +154,8 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 		private void InitializeTaskbar()
+ 		{
+ 			Closing += Taskbar_Closing;
++			Closed += (o, args) => foregroundTimer.Stop();
++			foregroundTimer.Tick += (o, args) => PromoteAboveWindowsTaskbar();
+ 			Loaded += (o, args) => InitializeBounds();
+ 			QuitButton.Clicked += QuitButton_Clicked;
+ 		}
+@@ -186,13 +192,34 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
+ 			{
+ 				InitializeBounds();
+ 				base.Show();
++				PromoteAboveWindowsTaskbar();
++				foregroundTimer.Start();
+ 			}
+ 			else
+ 			{
++				foregroundTimer.Stop();
+ 				base.Hide();
+ 			}
+ 		}
+ 
++		[DllImport("user32.dll")]
++		private static extern IntPtr GetForegroundWindow();
++
++		[DllImport("user32.dll", SetLastError = true)]
++		private static extern bool SetWindowPos(IntPtr window, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
++
++		private void PromoteAboveWindowsTaskbar()
++		{
++			var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
++			var handle = new WindowInteropHelper(this).Handle;
++			var foreground = GetForegroundWindow();
++
++			if (IsVisible && main != null && main.IsFullScreen && (foreground == main.Handle || foreground == handle))
++			{
++				SetWindowPos(handle, new IntPtr(-1), 0, 0, 0, 0, 0x0013);
++			}
++		}
++
+ 		private void Activator_Activated()
+ 		{
+ 			(this as ITaskbar).Focus(true);

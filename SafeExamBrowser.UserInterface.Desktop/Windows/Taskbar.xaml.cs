@@ -9,7 +9,10 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Threading;
 using SafeExamBrowser.Browser.Contracts.Events;
 using SafeExamBrowser.I18n.Contracts;
 using SafeExamBrowser.Logging.Contracts;
@@ -25,6 +28,7 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private bool allowClose;
 		private bool shellEnabled;
+		private readonly DispatcherTimer foregroundTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
 		private bool isQuitButtonFocusedAtKeyDown;
 		private bool isFirstChildFocusedAtKeyDown;
 
@@ -150,6 +154,8 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		private void InitializeTaskbar()
 		{
 			Closing += Taskbar_Closing;
+			Closed += (o, args) => foregroundTimer.Stop();
+			foregroundTimer.Tick += (o, args) => PromoteAboveWindowsTaskbar();
 			Loaded += (o, args) => InitializeBounds();
 			QuitButton.Clicked += QuitButton_Clicked;
 		}
@@ -186,10 +192,31 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 			{
 				InitializeBounds();
 				base.Show();
+				PromoteAboveWindowsTaskbar();
+				foregroundTimer.Start();
 			}
 			else
 			{
+				foregroundTimer.Stop();
 				base.Hide();
+			}
+		}
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetForegroundWindow();
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool SetWindowPos(IntPtr window, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
+
+		private void PromoteAboveWindowsTaskbar()
+		{
+			var main = Application.Current.Windows.OfType<BrowserWindow>().FirstOrDefault(w => w.IsMainWindow);
+			var handle = new WindowInteropHelper(this).Handle;
+			var foreground = GetForegroundWindow();
+
+			if (IsVisible && main != null && main.IsFullScreen && (foreground == main.Handle || foreground == handle))
+			{
+				SetWindowPos(handle, new IntPtr(-1), 0, 0, 0, 0, 0x0013);
 			}
 		}
 

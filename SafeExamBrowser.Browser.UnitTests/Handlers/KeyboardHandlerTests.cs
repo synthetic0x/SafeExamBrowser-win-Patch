@@ -25,7 +25,7 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
 		}
 
 		[TestMethod]
-		public void MustToggleFullScreenOnceOnF11Release()
+		public void MustToggleFullScreenOncePerF11Press()
 		{
 			var shortcut = false;
 			var toggles = 0;
@@ -33,9 +33,11 @@ namespace SafeExamBrowser.Browser.UnitTests.Handlers
 
 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
-			Assert.AreEqual(0, toggles);
+			Assert.AreEqual(1, toggles);
 			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.KeyUp, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
 			Assert.AreEqual(1, toggles);
+			Assert.IsTrue(sut.OnPreKeyEvent(null, null, KeyType.RawKeyDown, (int) Keys.F11, 0, default(CefEventFlags), false, ref shortcut));
+			Assert.AreEqual(2, toggles);
 		}
 
 		[TestMethod]

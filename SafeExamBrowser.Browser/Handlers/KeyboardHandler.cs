@@ -26,6 +26,7 @@ namespace SafeExamBrowser.Browser.Handlers
 		internal event TabPressedEventHandler TabPressed;
 
 		private int? currentKeyDown = null;
+		private bool fullScreenKeyDown;
 
 		public bool OnKeyEvent(IWebBrowser browserControl, IBrowser browser, KeyType type, int keyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey)
 		{
@@ -78,9 +79,17 @@ namespace SafeExamBrowser.Browser.Handlers
 		{
 			if (keyCode == (int) Keys.F11 && FullScreenRequested != null)
 			{
-				if (type == KeyType.KeyUp)
+				if (type == KeyType.RawKeyDown || type == KeyType.KeyDown)
 				{
-					FullScreenRequested.Invoke();
+					if (!fullScreenKeyDown)
+					{
+						fullScreenKeyDown = true;
+						FullScreenRequested.Invoke();
+					}
+				}
+				else if (type == KeyType.KeyUp)
+				{
+					fullScreenKeyDown = false;
 				}
 
 				return true;

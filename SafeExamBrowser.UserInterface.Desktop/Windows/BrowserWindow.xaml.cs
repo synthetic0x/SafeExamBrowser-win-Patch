@@ -9,6 +9,7 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,6 +52,9 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 		private WindowState savedWindowState;
 		private WindowStyle savedWindowStyle;
 		private ResizeMode savedResizeMode;
+		private IntPtr keyboardHook;
+		private KeyboardHookDelegate keyboardHookDelegate;
+		private bool f11Pressed;
 		private IInputElement tabKeyDownFocusElement;
 
 		private WindowSettings WindowSettings
@@ -149,6 +153,72 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 				Activate();
 			}));
+		}
+
+		private delegate IntPtr KeyboardHookDelegate(int code, IntPtr message, IntPtr data);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern IntPtr SetWindowsHookEx(int id, KeyboardHookDelegate callback, IntPtr module, uint threadId);
+
+		[DllImport("user32.dll")]
+		private static extern bool UnhookWindowsHookEx(IntPtr hook);
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr message, IntPtr data);
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetForegroundWindow();
+
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+		private static extern IntPtr GetModuleHandle(string name);
+
+		private void InstallKeyboardHook()
+		{
+			if (isMainWindow)
+			{
+				keyboardHookDelegate = HandleKeyboardHook;
+				keyboardHook = SetWindowsHookEx(13, keyboardHookDelegate, GetModuleHandle(null), 0);
+
+				if (keyboardHook == IntPtr.Zero)
+				{
+					logger.Error($"Failed to install F11 keyboard hook: {Marshal.GetLastWin32Error()}.");
+				}
+			}
+		}
+
+		private IntPtr HandleKeyboardHook(int code, IntPtr message, IntPtr data)
+		{
+			if (code >= 0 && Marshal.ReadInt32(data) == 0x7A)
+			{
+				var foreground = GetForegroundWindow();
+				var taskbar = Application.Current.Windows.OfType<Taskbar>().FirstOrDefault();
+				var taskbarHandle = taskbar == null ? IntPtr.Zero : new WindowInteropHelper(taskbar).Handle;
+				var isActive = foreground != IntPtr.Zero && (foreground == Handle || foreground == taskbarHandle);
+				var keyMessage = message.ToInt32();
+
+				if (keyMessage == 0x101 || keyMessage == 0x105)
+				{
+					var handled = f11Pressed;
+					f11Pressed = false;
+
+					if (handled)
+					{
+						return (IntPtr) 1;
+					}
+				}
+				else if (isActive && (keyMessage == 0x100 || keyMessage == 0x104))
+				{
+					if (!f11Pressed)
+					{
+						f11Pressed = true;
+						ToggleFullScreen();
+					}
+
+					return (IntPtr) 1;
+				}
+			}
+
+			return CallNextHookEx(keyboardHook, code, message, data);
 		}
 
 		internal void UpdateFullScreenBounds()
@@ -523,6 +593,8 @@ namespace SafeExamBrowser.UserInterface.Desktop.Windows
 
 		private void RegisterEvents()
 		{
+			SourceInitialized += (o, args) => InstallKeyboardHook();
+			Closed += (o, args) => { if (keyboardHook != IntPtr.Zero) UnhookWindowsHookEx(keyboardHook); };
 			BackwardButton.Click += (o, args) => BackwardNavigationRequested?.Invoke();
 			Closed += (o, args) => closed?.Invoke();
 			Closing += BrowserWindow_Closing;
