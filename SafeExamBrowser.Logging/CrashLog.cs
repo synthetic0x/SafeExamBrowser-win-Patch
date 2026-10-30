@@ -29,6 +29,8 @@ namespace SafeExamBrowser.Logging
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.path = Path.Combine(appConfig.TemporaryDirectory, "CrashLog.txt");
+
+			fileSystem.CreateDirectory(appConfig.TemporaryDirectory);
 		}
 
 		public void Clear()
